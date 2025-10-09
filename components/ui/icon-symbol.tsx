@@ -18,10 +18,19 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'chevron.left': 'chevron-left',
   'calendar.circle.fill': 'calendar-today',
   'person.3.fill': 'groups', 
   'person.circle.fill': 'person',
   'figure.strengthtraining.traditional': 'fitness-center', // Workout
+  'bell.fill': 'notifications',
+  'flame.fill': 'local-fire-department', // streak icon
+  'figure.walk': 'directions-walk',      // steps
+  'flame': 'whatshot',                   // calories
+  'headphones': 'headphones',
+  'play.circle.fill': 'play-circle-filled',
+  'repeat': 'repeat',
+  'shuffle': 'shuffle',
 } as IconMapping;
 
 /**
