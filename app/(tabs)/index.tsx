@@ -12,7 +12,7 @@ export default function HomeScreen() {
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <ThemedText style={styles.greyDate}>{new Date().toLocaleDateString("en-US",
+        <ThemedText style={styles.greyDate}>{new Date().toLocaleDateString("no-NO",
         {
         weekday: "long",
         day: "numeric",
@@ -70,7 +70,9 @@ export default function HomeScreen() {
         <ThemedText>Focus: Upper body</ThemedText>
       </ThemedView>
 
-      {/* Music API */}
+      {/* Music API 
+      Denne blir fjernet senere for at vi skal ha den som en widget og ikke bare fast på en side
+      */}
       <ThemedView style={styles.musicControls}>
         <TouchableOpacity>
           <IconSymbol name="shuffle" size={26} color="#888" />
