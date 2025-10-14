@@ -1,11 +1,20 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { Stack } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, View } from 'react-native';
 import * as Progress from "react-native-progress";
 
 export default function StatsScreen() {
   return (
+    <>
+      <Stack.Screen
+        options={{
+          title: "Overall Stats",
+          headerBackTitle: "Profile",
+          headerTitleAlign: "center",
+        }}
+      />
     <ScrollView style={styles.container}>
         <ThemedText type="subtitle" style={styles.sectionTitle}>
                 Statistics
@@ -57,7 +66,7 @@ export default function StatsScreen() {
         </View>
         
     </ScrollView>
-    
+    </>
   );
 }
 
