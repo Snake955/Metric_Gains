@@ -58,7 +58,8 @@ const ProfileScreen = () => {
           onPress={() => router.push('/profile_screens/stats')}>
           <Text style={styles.menuText}>Stats</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuButton}>
+        <TouchableOpacity style={styles.menuButton}
+        onPress={() => router.push('/profile_screens/settings')}>
           <Text style={styles.menuText}>Settings</Text>
         </TouchableOpacity>
       </View>
