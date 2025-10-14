@@ -52,6 +52,9 @@ const ProfileScreen = () => {
         <TouchableOpacity style={styles.menuButton}>
           <Text style={styles.menuText}>Ranks</Text>
         </TouchableOpacity>
+          <TouchableOpacity style={styles.menuButton}>
+          <Text style={styles.menuText}>Stats</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.menuButton}>
           <Text style={styles.menuText}>Settings</Text>
         </TouchableOpacity>
