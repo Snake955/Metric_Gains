@@ -1,6 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import React from "react";
 import { ScrollView, StyleSheet, View } from 'react-native';
 import * as Progress from "react-native-progress";
@@ -8,9 +7,6 @@ import * as Progress from "react-native-progress";
 export default function StatsScreen() {
   return (
     <ScrollView style={styles.container}>
-        <View style={styles.header}>
-            <IconSymbol name="bell.fill" size={24} color="#3f3f3fff" />
-        </View>
         <ThemedText type="subtitle" style={styles.sectionTitle}>
                 Statistics
         </ThemedText>
@@ -69,13 +65,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-
-  header: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginBottom: 5,
+    paddingTop: 20,
   },
   topbar_index: {
     fontSize:22,
