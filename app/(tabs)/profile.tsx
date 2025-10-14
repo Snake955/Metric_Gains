@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import React from 'react';
 import type { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 import { Image, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
@@ -7,6 +8,7 @@ const ProfileScreen = () => {
   const placeholderImage = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
   const isDarkMode = colorScheme === 'dark';
   const styles = isDarkMode ? dark : light;
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -52,7 +54,8 @@ const ProfileScreen = () => {
         <TouchableOpacity style={styles.menuButton}>
           <Text style={styles.menuText}>Ranks</Text>
         </TouchableOpacity>
-          <TouchableOpacity style={styles.menuButton}>
+          <TouchableOpacity style={styles.menuButton}
+          onPress={() => router.push('/profile_screens/stats')}>
           <Text style={styles.menuText}>Stats</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuButton}>
@@ -75,6 +78,7 @@ type Styles = {
   rankBarBackground: ViewStyle;
   rankBarFill: ViewStyle;
   rankBarText: TextStyle;
+  link: TextStyle
   menu: ViewStyle;
   menuButton: ViewStyle;
   menuText: TextStyle;
@@ -138,6 +142,9 @@ const baseStyles: Styles = {
   rankBarText: {
     color: '#000000ff',
     fontWeight: '600',
+  },
+  link: {
+    textDecorationLine: "none",
   },
   menu: {
     width: '85%',
