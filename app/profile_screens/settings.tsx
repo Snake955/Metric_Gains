@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { Text, View } from 'react-native';
 
 export default function SettingsScreen() {
+    const placeholderImage = 'https://cdn-icons-png.flaticon.com/512/8187/8187143.png';
   return (
         <>
           <Stack.Screen
