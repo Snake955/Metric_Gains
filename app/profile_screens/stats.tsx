@@ -3,6 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Stack } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { LineChart } from 'react-native-gifted-charts';
 import * as Progress from "react-native-progress";
 
 export default function StatsScreen() {
@@ -17,7 +18,7 @@ export default function StatsScreen() {
       />
     <ScrollView style={styles.container}>
         <ThemedText type="subtitle" style={styles.sectionTitle}>
-                Statistics
+          Statistics
         </ThemedText>
         <View style={styles.activityRow}>
         <ThemedView style={styles.activityCard}>
@@ -61,8 +62,26 @@ export default function StatsScreen() {
             Progress
           </ThemedText>
           <ThemedView style={styles.progressCard}>
-            <ThemedText type="defaultSemiBold">Graf</ThemedText>
-        </ThemedView>
+            <LineChart
+              data={[
+                { value: 5 },
+                { value: 10 },
+                { value: 8 },
+                { value: 15 },
+                { value: 12 },
+                { value: 17 },
+                { value: 22 },
+              ]}
+              color="#2D7FF9"
+              hideRules
+              dataPointsColor="#2D7FF9"
+              dataPointsRadius={2}
+              yAxisColor="transparent"
+              xAxisColor="transparent"
+              hideYAxisText
+              curved={false}
+            />
+          </ThemedView>
         </View>
         
     </ScrollView>
@@ -122,7 +141,8 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 12,
     borderRadius: 12,
-    alignItems: "center",
+    alignItems: "stretch",
+    justifyContent: "center",
     backgroundColor: "#fff",
     // skygge effekt
     shadowColor: "#000",
