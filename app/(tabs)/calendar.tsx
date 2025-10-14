@@ -63,7 +63,7 @@ export default function CalendarScreen() {
 
       <Text style={styles.sectionTitle}>Your workouts</Text>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Stregth</Text>
+        <Text style={styles.cardTitle}>Strength</Text>
         <Text style={styles.cardTime}>6:00 - 7:00</Text>
         <Text style={styles.cardText}>Focus: Upper Body</Text>
         <Text style={styles.cardText}>Exercies: 8</Text>
