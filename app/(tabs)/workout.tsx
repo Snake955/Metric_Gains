@@ -11,7 +11,7 @@ export default function WorkoutMain() {
       </View>
 
       <View style={styles.main1}>
-        <Button title="Start workout" color="black" onPress={() => setIsModalVisible(true)}/>
+        <Button title="Start workout" color="#2D7FF9" onPress={() => setIsModalVisible(true)}/>
       </View>
 
       <Modal visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)} animationType="slide" presentationStyle="formSheet">
@@ -21,7 +21,7 @@ export default function WorkoutMain() {
         <SafeAreaView style={styles.modalBody}>
 
           <View style={styles.modalMain}>
-            <Button title="Close" color="black" onPress={() => setIsModalVisible(false)}></Button>
+            <Button title="Close" color="#2D7FF9" onPress={() => setIsModalVisible(false)}></Button>
           </View>
 
           <View style={styles.modalHeader}>
@@ -96,7 +96,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   main1: {
-    flex: 1,
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
     paddingLeft: 15,
