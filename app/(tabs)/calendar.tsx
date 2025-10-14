@@ -61,18 +61,14 @@ export default function CalendarScreen() {
       />
       </View>
 
-      <Text style={styles.sectionTitle}>Your workouts</Text>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Strength</Text>
-        <Text style={styles.cardTime}>6:00 - 7:00</Text>
-        <Text style={styles.cardText}>Focus: Upper Body</Text>
-        <Text style={styles.cardText}>Exercies: 8</Text>
-        <TouchableOpacity style={[styles.btn, { backgroundColor: tint }]}>
           <Text style={styles.btnText}>Change</Text>
         </TouchableOpacity>
           <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
   
       </View>
+    </TouchableOpacity>
+  </View>
+</View>
 
 
       <Text style={styles.sectionTitle}>Friend workouts</Text>
@@ -102,7 +98,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     justifyContent: "center",
   
-
   },
 
   header: { 
@@ -132,22 +127,36 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: { 
-    fontSize: 18, 
+    fontSize: 25, 
     fontWeight: "700", 
     marginTop: 12, 
-    marginBottom: 6 
+    marginBottom: 6, 
+    marginLeft:5,
   },
 
-  card: { 
+   card: { 
     backgroundColor: "#ffffff", 
     borderRadius: 12, 
     padding: 12, 
     marginBottom: 10, 
-    borderWidth: 1, 
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+
+  cardLeftContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+
+  cardRightContent: {
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop:30,
   },
 
   cardTitle: { 
-    color: '#2f6cf9', 
+    color: "#2f6cf9", 
     fontWeight: "700", 
     fontSize: 16, 
     marginBottom: 4 
@@ -165,10 +174,12 @@ const styles = StyleSheet.create({
 
   btn: { 
     alignSelf: "flex-start", 
-    paddingHorizontal: 12, 
-    paddingVertical: 6, 
-    borderRadius: 8, 
-    marginTop: 8 
+    paddingVertical: 3, 
+    marginRight:15,
+    borderRadius: 12, 
+    marginLeft:20,
+    paddingLeft: 20,
+    paddingRight:20,
   },
 
   btnText: { 
@@ -188,11 +199,11 @@ const styles = StyleSheet.create({
     marginBottom: 10 
   },
     
-    joinBtn: { 
-      paddingHorizontal: 12, 
-      paddingVertical: 6, 
-      borderRadius: 999, 
-      borderWidth: 1 
+  joinBtn: { 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 999, 
+    borderWidth: 1 
     },
 
   joinText: { 
@@ -201,6 +212,9 @@ const styles = StyleSheet.create({
   },
 
   UpperBodyIcon: {
-    width: 50,
+    marginBottom: 20,
+    width: 90,
+    height: 90,
+    marginLeft: 10,
   }
 });
