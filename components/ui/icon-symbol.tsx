@@ -20,7 +20,6 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   'chevron.left': 'chevron-left',
   'calendar.circle.fill': 'calendar-today',
-  'person.3.fill': 'groups', 
   'person.circle.fill': 'person',
   'figure.strengthtraining.traditional': 'fitness-center', // Workout
   'bell.fill': 'notifications',
@@ -29,6 +28,7 @@ const MAPPING = {
   'play.circle.fill': 'play-circle-filled',
   'repeat': 'repeat',
   'shuffle': 'shuffle',
+  'magnifyingglass': 'search'
 } as IconMapping;
 
 /**

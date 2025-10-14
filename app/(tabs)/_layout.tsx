@@ -5,6 +5,7 @@ import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Image } from 'react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -12,7 +13,7 @@ export default function TabLayout() {
   return (
 <Tabs
   screenOptions={{
-    tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+    tabBarActiveTintColor: "#2f6cf9",
     headerShown: false,
     tabBarButton: HapticTab,
     tabBarStyle: {
@@ -46,7 +47,9 @@ export default function TabLayout() {
         options={{
           title: 'Community',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.3.fill" color={color} />
+            <Image source={require("@/assets/images/globe-alt.png")}
+            style={{width: 28, height: 28, tintColor: color}}
+            />
           ),
         }}
       />
