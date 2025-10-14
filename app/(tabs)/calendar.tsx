@@ -60,12 +60,19 @@ export default function CalendarScreen() {
   }}
       />
       </View>
-
-          <Text style={styles.btnText}>Change</Text>
-        </TouchableOpacity>
-          <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
-  
-      </View>
+<Text style={styles.sectionTitle}>My workouts</Text>
+<View style={styles.card}>
+  <View style={styles.cardLeftContent}>
+    <Text style={styles.cardTitle}>Strength</Text>
+    <Text style={styles.cardTime}>10:00 - 14:00</Text>
+    <Text>    </Text>
+    <Text style={styles.cardText}>Focus: Upper Body</Text>
+    <Text style={styles.cardText}>Exercises: 8</Text>
+  </View>
+    <View style={styles.cardRightContent}>
+    <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
+    <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9"}]}>
+      <Text style={styles.btnText}>Change</Text>
     </TouchableOpacity>
   </View>
 </View>
