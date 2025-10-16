@@ -11,6 +11,8 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
+    //<KeyboardProvider>
+    //<SafeAreaProvider>
 <Tabs
   screenOptions={{
     tabBarActiveTintColor: "#2f6cf9",
