@@ -3,15 +3,13 @@
     "name": "Metric_Gains",
     "slug": "Metric_Gains",
     "version": "1.0.0",
-    "jsEngine": "hermes",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "metricgains",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.hiof.metricgains"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
@@ -21,8 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.hiof.metricgains"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
@@ -40,12 +37,6 @@
           "dark": {
             "backgroundColor": "#000000"
           }
-        }
-      ],
-      [
-        "expo-dev-client",
-        {
-          "launchMode": "most-recent"
         }
       ]
     ],
