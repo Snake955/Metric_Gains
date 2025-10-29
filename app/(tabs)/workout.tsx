@@ -3,7 +3,23 @@ import { Button, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } f
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WorkoutMain() {
+
+
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const [workouts] = useState([
+    { id: 1, name: 'Bench Press', sets: 4, reps: 10, weight: '60kg' },
+    { id: 2, name: 'Squats', sets: 3, reps: 12, weight: '80kg' },
+    { id: 3, name: 'Deadlift', sets: 4, reps: 8, weight: '100kg' },
+    { id: 4, name: 'Pull Ups', sets: 3, reps: 10, weight: 'Body' },
+    { id: 5, name: 'Plank', sets: 3, reps: '1min', weight: '-' },
+  ]);
+
+  const editHandle = (id: number) => {
+  const choiceWorkout = workouts.find(wo => wo.id === id);
+  console.log('Edit:', choiceWorkout);
+  };
+
   return (
     <SafeAreaView style={styles.body}>
       <View style={styles.header}>
@@ -38,13 +54,7 @@ export default function WorkoutMain() {
             <Text style={[styles.tableItem, styles.headerItem]}>Weight</Text>
           </View>
 
-          {[
-            { name: 'Bench Press', sets: 4, reps: 10, weight: '60kg' },
-            { name: 'Squats', sets: 3, reps: 12, weight: '80kg' },
-            { name: 'Deadlift', sets: 4, reps: 8, weight: '100kg' },
-            { name: 'Pull Ups', sets: 3, reps: 10, weight: 'Body' },
-            { name: 'Plank', sets: 3, reps: '1min', weight: '-' },
-          ].map((item, index) => (
+          {workouts.map((item, index) => (
 
             <View key={index} style={styles.tableRow}>
               <TouchableOpacity style={[styles.tableButton, { flex: 1 }]} onPress={() => {}}>
@@ -53,6 +63,10 @@ export default function WorkoutMain() {
               <Text style={styles.tableItem}>{item.sets}</Text>
               <Text style={styles.tableItem}>{item.reps}</Text>
               <Text style={styles.tableItem}>{item.weight}</Text>
+
+              <TouchableOpacity onPress={() => editHandle(item.id)} style={styles.editButton}>
+                <Text style={styles.editContent}>Edit</Text>
+              </TouchableOpacity>
             </View>
 
           ))}
@@ -181,5 +195,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
     textAlign: 'center',
+  },
+  editButton: {
+  backgroundColor: '#2770ddff',
+  paddingVertical: 4,
+  paddingHorizontal: 8,
+  marginLeft: 6,
+  justifyContent: 'center',
+  alignItems: 'center',
+  },
+  editContent: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 12,
   },
 });
