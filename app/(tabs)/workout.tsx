@@ -24,10 +24,11 @@ export default function WorkoutMain() {
     <SafeAreaView style={styles.body}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>WORKOUT</Text>
-      </View>
 
-      <View style={styles.main1}>
-        <Button title="Start workout" color="#2D7FF9" onPress={() => setIsModalVisible(true)}/>
+        <TouchableOpacity style={styles.start} onPress={() => setIsModalVisible(true)}>
+            <Text style={styles.startText}>+</Text>
+        </TouchableOpacity>
+        
       </View>
 
       <Modal visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)} animationType="slide" presentationStyle="formSheet">
@@ -94,6 +95,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: PADDING1,
   },
   header: {
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 1,
@@ -104,6 +106,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
   },
+  start: {
+    position: 'absolute',
+    right: 5,
+    bottom: '10%',
+  },
+  startText: {
+    color: '#2770ddff',
+    fontSize: 40,
+    textAlign: 'center',
+  },
+
   main: {
     flex: 1,
     alignItems: 'center',
