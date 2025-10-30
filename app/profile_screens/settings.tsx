@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import React from "react";
-import { ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
+import { ScrollView, StyleSheet, Text, TextInput, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
 
 export default function Settings() {
   const colorScheme = useColorScheme();
@@ -24,6 +24,19 @@ export default function Settings() {
         style={styles.scroll as any}
         contentContainerStyle={{ alignItems: "center" }}
       >
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search-outline"
+            size={20}
+            color={isDarkMode ? "#aaa" : "#666"}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchBar as any}
+            placeholder="Search"
+            placeholderTextColor={isDarkMode ? "#aaa" : "#666"}
+          />
+        </View>
           
 
           <Text style={styles.title as TextStyle}>Settings</Text>
@@ -79,6 +92,7 @@ export default function Settings() {
                 <Ionicons
                   name="chevron-forward-outline"
                   size={18}
+                  color={isDarkMode ? "#fff" : "#000"}
                 />
               </View>
             </TouchableOpacity>
@@ -106,6 +120,7 @@ export default function Settings() {
               </View>
             </TouchableOpacity>
           </View>
+                  <Text style={styles.footer}>© Metric Gains 2025</Text>
       </ScrollView>
     </>
   );
@@ -113,28 +128,38 @@ export default function Settings() {
 
 const baseStyles: {
   scroll: ViewStyle;
-  container: ViewStyle;
-  searchBar: ViewStyle;
+  container?: ViewStyle;
+  searchContainer: ViewStyle;
+  searchBar: TextStyle;
+  searchIcon: TextStyle;
   title: TextStyle;
   menu: ViewStyle;
   menuButton: ViewStyle;
   menuRow: ViewStyle;
   menuText: TextStyle;
+  footer: TextStyle;
 } = {
   scroll: {
     flex: 1,
   },
-  container: {
-    flex: 1,
-    alignItems: "center",
-    paddingTop: 60,
-    paddingBottom: 40,
+  searchContainer: {
+    width: "85%",
+    position: "relative", 
+    marginTop: 20,
+    marginBottom: 12,
   },
   searchBar: {
     height: 40,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 12,
+    paddingLeft: 35,
+    paddingRight: 10,
+    fontSize: 16,
+  },
+  searchIcon: {
+    position: "absolute",
+    left: 10,
+    top: 10,
+    zIndex: 1,
   },
   title: {
     fontSize: 28,
@@ -160,6 +185,13 @@ const baseStyles: {
     fontSize: 18,
     marginLeft: 10,
   },
+  footer: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 20,
+    marginBottom: 40,
+    alignSelf: "center",
+  },
 };
  
 const light = StyleSheet.create({
@@ -174,7 +206,7 @@ const light = StyleSheet.create({
   },
   searchBar: {
     ...baseStyles.searchBar,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#e2e0e0ff",
     color: "#000",
   },
   menuText: {
@@ -192,6 +224,11 @@ const dark = StyleSheet.create({
   title: {
     ...baseStyles.title,
     color: "#fff",
+  },
+    searchBar: {
+    ...baseStyles.searchBar,
+    backgroundColor: "#f2f2f2",
+    color: "#ffffffff",
   },
   menuText: {
     ...baseStyles.menuText,
