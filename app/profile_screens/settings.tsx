@@ -8,6 +8,8 @@ export default function Settings() {
   const isDarkMode = colorScheme === "dark";
   const styles = isDarkMode ? dark : light;
 
+
+
   return (
     <>
       <Stack.Screen
@@ -29,51 +31,71 @@ export default function Settings() {
           <Ionicons
             name="settings-outline"
             size={70}
-            style={{ marginBottom: 25 }}/>
+            color={isDarkMode ? "#fff" : "#000"}
+            style={{ marginBottom: 25 }}
+          />
 
           <View style={styles.menu}>
             <TouchableOpacity style={styles.menuButton}>
               <View style={styles.menuRow}>
                 <Ionicons
                   name="person-outline"
-                  size={22}/>
+                  size={22}
+                  color={isDarkMode ? "#fff" : "#000"}
+                />
                 <Text style={styles.menuText}>User</Text>
                 <Ionicons
                   name="chevron-forward-outline"
-                  size={18}/>
+                  size={18}
+                  color={isDarkMode ? "#fff" : "#000"}
+                />
               </View>
             </TouchableOpacity>
+
             <TouchableOpacity style={styles.menuButton}>
               <View style={styles.menuRow}>
                 <Ionicons
                   name="eye-outline"
-                  size={22}/>
+                  size={22}
+                  color={isDarkMode ? "#fff" : "#000"}
+                />
                 <Text style={styles.menuText}>Display</Text>
                 <Ionicons
                   name="chevron-forward-outline"
-                  size={18}/>
+                  size={18}
+                  color={isDarkMode ? "#fff" : "#000"}
+                />
               </View>
             </TouchableOpacity>
+
             <TouchableOpacity style={styles.menuButton}>
               <View style={styles.menuRow}>
                 <Ionicons
                   name="lock-closed-outline"
-                  size={22}/>
+                  size={22}
+                  color={isDarkMode ? "#fff" : "#000"}
+                />
                 <Text style={styles.menuText}>Security</Text>
                 <Ionicons
                   name="chevron-forward-outline"
-                  size={18}/>
+                  size={18}
+                />
               </View>
             </TouchableOpacity>
+
             <TouchableOpacity style={styles.menuButton}>
               <View style={styles.menuRow}>
                 <Ionicons
                   name="notifications-outline"
-                  size={22}/>
+                  size={22}
+                  color={isDarkMode ? "#fff" : "#000"}
+                />
                 <Text style={styles.menuText}>Notifications</Text>
                 <Ionicons
                   name="chevron-forward-outline"
-                  size={18}/>
+                  size={18}
+                  color={isDarkMode ? "#fff" : "#000"}
+                />
               </View>
             </TouchableOpacity>
 
@@ -97,7 +119,8 @@ const baseStyles: {
   menu: ViewStyle;
   menuButton: ViewStyle;
   menuRow: ViewStyle;
-  menuText: TextStyle;} = {
+  menuText: TextStyle;
+} = {
   scroll: {
     flex: 1,
   },
@@ -138,7 +161,7 @@ const baseStyles: {
     marginLeft: 10,
   },
 };
-
+ 
 const light = StyleSheet.create({
   ...baseStyles,
   container: {
