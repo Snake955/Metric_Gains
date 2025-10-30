@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ThemedText } from "@/components/themed-text";
 import { Button, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,13 +23,22 @@ export default function WorkoutMain() {
 
   return (
     <SafeAreaView style={styles.body}>
+
+      {/* Header */}
+            <View style={styles.headerDate}>
+              <ThemedText style={styles.greyDate}>{new Date().toLocaleDateString("no-NO",
+              {
+              weekday: "long",
+              day: "numeric",
+              month: "long",})}
+              </ThemedText>
+            </View>
+
       <View style={styles.header}>
         <Text style={styles.headerTitle}>WORKOUT</Text>
-
-        <TouchableOpacity style={styles.start} onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.startText}>+</Text>
+        <TouchableOpacity style={styles.addWorkout} onPress={() => setIsModalVisible(true)}>
+            <Text style={styles.addWorkoutText}>+</Text>
         </TouchableOpacity>
-        
       </View>
 
       <Modal visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)} animationType="slide" presentationStyle="formSheet">
@@ -78,8 +88,19 @@ export default function WorkoutMain() {
 
       </Modal>
 
+      <View style={styles.friendCard}>
+        <View>
+          <Text style={styles.cardTitle}>Strength</Text>
+          <Text style={styles.cardTime}>Duration: 1h</Text>
+          <Text style={styles.cardText}>Focus: Arms</Text>
+          <Text style={styles.cardText}>Exercises: 3</Text>
+        </View>
+      </View>
+      
       <View style={styles.main}>
-        <Text style={styles.mainTitle}>Start a workout!</Text>
+        <TouchableOpacity style={styles.startWorkout}>
+            <Text style={styles.mainTitle}>Start the Workout!</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -105,22 +126,23 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#FFFFFF',
     textAlign: 'center',
+    bottom: '30%',
   },
-  start: {
+  addWorkout: {
     position: 'absolute',
     right: 5,
     bottom: '10%',
   },
-  startText: {
+  addWorkoutText: {
     color: '#2770ddff',
     fontSize: 40,
     textAlign: 'center',
   },
-
   main: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 40,
   },
   main1: {
     alignItems: 'flex-start',
@@ -129,10 +151,12 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
   mainTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 8,
+    backgroundColor: '#2770ddff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignSelf: 'center',
   },
   modalBody: {
     flex: 1,
@@ -221,5 +245,47 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 12,
+  },
+
+  startWorkout: {
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+
+  friendCard: { 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    backgroundColor: '#ffffffff', 
+    borderRadius: 18, 
+    padding: 12, 
+    borderWidth: 1, 
+    borderColor: "#e6e6e6ff", 
+  },
+
+  cardTitle: { 
+    color: "#2f6cf9", 
+    fontWeight: "700", 
+    fontSize: 26, 
+    marginBottom: 5,
+  },
+
+  cardTime: { 
+    color: "#666666ff", 
+    marginBottom: 1,
+  },
+
+  cardText: { 
+    color: "#666666ff", 
+    marginBottom: 1,
+  },
+  greyDate: {
+    color: "#888",
+    fontSize:10,
+  },
+  headerDate: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
   },
 });
