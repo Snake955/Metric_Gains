@@ -3,7 +3,7 @@ import React from 'react';
 import type { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 import { Image, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
-const ProfileScreen = () => {
+export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const placeholderImage = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
   const isDarkMode = colorScheme === 'dark';
@@ -198,5 +198,3 @@ const dark = StyleSheet.create<Styles>({
     borderColor: '#333',
   },
 });
-
-export default ProfileScreen;
