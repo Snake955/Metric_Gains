@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, PanResponder, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, PanResponder, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Progress from "react-native-progress";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function RanksScreen() {
@@ -61,65 +62,61 @@ export default function RanksScreen() {
     };
 
     return (
-                <>
-          <Stack.Screen
-            options={{
-              title: "Ranking",
-              headerBackTitle: "Profile",
-              headerTitleAlign: "center",
-            }}
-          />
-        
-        <SafeAreaView style={styles.container} {...panResponder.panHandlers}>
-            <View style={styles.header}>
-                <Ionicons name="arrow-back" size={24} color="black" />
-                <Text style={styles.headerTitle}>Ranks</Text>
-            </View>
-            <View style={styles.tabContainer}>
-                {sections.map((section) => {
-                    const isActive = selected === section;
-                    return (
-                        <TouchableOpacity
-                            key={section}
-                            onPress={() => setSelected(section)}
-                            activeOpacity={0.7}
-                        >
-                            <Animated.Text
-                                style={[
-                                    styles.tab,
-                                    {
-                                        color: isActive ? "black" : "gray",
-                                        fontSize: isActive ? 22 : 16,
-                                        fontWeight: isActive ? "bold" : "400",
-                                        transform: [{ scale: isActive ? 1.15 : 1 }],
-                                    },
-                                ]}
+        <><SafeAreaView>
+            <Stack.Screen
+                options={{
+                    title: "Ranking",
+                    headerBackTitle: "Profile",
+                    headerTitleAlign: "center",
+                }}
+            />
+            <View style={styles.container} {...panResponder.panHandlers}>
+                <View style={styles.tabContainer}>
+                    {sections.map((section) => {
+                        const isActive = selected === section;
+                        return (
+                            <TouchableOpacity
+                                key={section}
+                                onPress={() => setSelected(section)}
+                                activeOpacity={0.7}
                             >
-                                {section}
-                            </Animated.Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </View>
-            {ranks[selected].map((item, index) => (
-                <View key={index} style={styles.rankRow}>
-                    <Text style={styles.muscle}>{item.name}</Text>
-                    <View style={styles.progressContainer}>
-                        <Progress.Bar
-                            progress={0}
-                            width={200}
-                            color={item.color}
-                            height={12}
-                            borderWidth={0}
-                            unfilledColor="#ffffff"
-                        />
-                        <Text style={styles.rankText}>Rank --</Text>
-                    </View>
+                                <Animated.Text
+                                    style={[
+                                        styles.tab,
+                                        {
+                                            color: isActive ? "black" : "gray",
+                                            fontSize: isActive ? 22 : 16,
+                                            fontWeight: isActive ? "bold" : "400",
+                                            transform: [{ scale: isActive ? 1.15 : 1 }],
+                                        },
+                                    ]}
+                                >
+                                    {section}
+                                </Animated.Text>
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
-            ))}
-            <View style={styles.badgeContainer}>
-                <View style={styles.hexagon}>
-                    <Ionicons name="chevron-down-outline" size={32} color="#FFD700" />
+                {ranks[selected].map((item, index) => (
+                    <View key={index} style={styles.rankRow}>
+                        <Text style={styles.muscle}>{item.name}</Text>
+                        <View style={styles.progressContainer}>
+                            <Progress.Bar
+                                progress={0}
+                                width={200}
+                                color={item.color}
+                                height={12}
+                                borderWidth={0}
+                                unfilledColor="#ffffff"
+                            />
+                            <Text style={styles.rankText}>Rank --</Text>
+                        </View>
+                    </View>
+                ))}
+                <View style={styles.badgeContainer}>
+                    <View style={styles.hexagon}>
+                        <Ionicons name="chevron-down-outline" size={32} color="#FFD700" />
+                    </View>
                 </View>
             </View>
         </SafeAreaView>
@@ -130,14 +127,10 @@ export default function RanksScreen() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: "#EAEAEA",
-        padding: 16,
     },
     header: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 20,
     },
     headerTitle: {
         fontSize: 20,
@@ -147,7 +140,6 @@ const styles = StyleSheet.create({
     tabContainer: {
         flexDirection: "row",
         justifyContent: "center",
-        marginBottom: 20,
     },
     tab: {
         marginHorizontal: 15,
