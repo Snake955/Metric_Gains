@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import React from "react";
-import { ScrollView, StyleSheet, Text, TextInput, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
+import { Image, ImageStyle, ScrollView, StyleSheet, Text, TextInput, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
 
 export default function Settings() {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === "dark";
   const styles = isDarkMode ? dark : light;
+  const router = useRouter();
 
 
 
@@ -49,7 +50,8 @@ export default function Settings() {
           />
 
           <View style={styles.menu}>
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity style={styles.menuButton}
+            onPress={() => router.push('/profile_screens/setting_screens/user_settings')}>
               <View style={styles.menuRow}>
                 <Ionicons
                   name="person-outline"
@@ -65,7 +67,8 @@ export default function Settings() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity style={styles.menuButton}            
+            onPress={() => router.push('/profile_screens/setting_screens/display_settings')}>
               <View style={styles.menuRow}>
                 <Ionicons
                   name="eye-outline"
@@ -81,7 +84,8 @@ export default function Settings() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity style={styles.menuButton}            
+            onPress={() => router.push('/profile_screens/setting_screens/security_settings')}>
               <View style={styles.menuRow}>
                 <Ionicons
                   name="lock-closed-outline"
@@ -97,7 +101,8 @@ export default function Settings() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity style={styles.menuButton}
+              onPress={() => router.push('/profile_screens/setting_screens/noti_settings')}>
               <View style={styles.menuRow}>
                 <Ionicons
                   name="notifications-outline"
@@ -112,7 +117,6 @@ export default function Settings() {
                 />
               </View>
             </TouchableOpacity>
-
             <TouchableOpacity style={[styles.menuButton, { borderBottomWidth: 0 }]}>
               <View style={styles.menuRow}>
                 <Ionicons name="log-out-outline" size={22} color="#f87171" />
@@ -120,13 +124,40 @@ export default function Settings() {
               </View>
             </TouchableOpacity>
           </View>
-                  <Text style={styles.footer}>© Metric Gains 2025</Text>
+          <View style={styles.musicButtonsContainer}>
+  <TouchableOpacity style={styles.appleMusicButton}>
+    <View style={styles.musicButtonRow}>
+      <Image
+        source={{
+          uri: "https://www.apple.com/newsroom/images/product/apple-music/apple_music-update_hero_08242021.jpg.news_app_ed.jpg",
+        }}
+        style={styles.appleLogo}
+      />
+      <Text style={[styles.musicButtonText, { color: "#ffffffff" }]}>Login to Apple Music</Text>
+      <Ionicons name="chevron-forward-outline" size={18} color="#fff" />
+    </View>
+  </TouchableOpacity>
+  <TouchableOpacity style={styles.spotifyButton}>
+    <View style={styles.musicButtonRow}>
+      <Image
+        source={{
+          uri: "https://e7.pngegg.com/pngimages/4/438/png-clipart-spotify-logo-spotify-mobile-app-computer-icons-app-store-music-free-icon-spotify-miscellaneous-logo.png",
+        }}
+        style={styles.spotifyLogo}
+      />
+      <Text style={[styles.musicButtonText, { color: "#000" }]}>
+        Login to Spotify</Text>
+      <Ionicons name="chevron-forward-outline" size={18} color="#000" />
+    </View>
+  </TouchableOpacity>
+</View>
+      <Text style={styles.footer}>© Metric Gains 2025</Text>
       </ScrollView>
     </>
   );
 }
 
-const baseStyles: {
+const Styles: {
   scroll: ViewStyle;
   container?: ViewStyle;
   searchContainer: ViewStyle;
@@ -138,6 +169,13 @@ const baseStyles: {
   menuRow: ViewStyle;
   menuText: TextStyle;
   footer: TextStyle;
+  musicButtonsContainer: ViewStyle;
+  appleMusicButton: ViewStyle;
+  spotifyButton: ViewStyle;
+  musicButtonRow: ViewStyle;
+  musicButtonText: TextStyle;
+  appleLogo: ImageStyle;
+  spotifyLogo: ImageStyle;
 } = {
   scroll: {
     flex: 1,
@@ -185,6 +223,48 @@ const baseStyles: {
     fontSize: 18,
     marginLeft: 10,
   },
+musicButtonsContainer: {
+  width: "85%",
+  marginTop: 25,
+  marginBottom: 25,
+  gap: 16,
+},
+appleMusicButton: {
+  backgroundColor: "#FB233B",
+  borderRadius: 16,
+  paddingVertical: 14,
+  paddingHorizontal: 18,
+},
+spotifyButton: {
+  backgroundColor: "#1ED760",
+  borderRadius: 16,
+  paddingVertical: 14,
+  paddingHorizontal: 18,
+},
+musicButtonRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+},
+musicButtonText: {
+  flex: 1,
+  textAlign: "center",
+  fontSize: 18,
+  fontWeight: "500",
+},
+appleLogo: {
+  width: 35,
+  height: 35,
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: "#fff",
+},
+spotifyLogo: {
+  width: 35,
+  height: 35,
+  borderRadius: 8,
+},
+
   footer: {
     fontSize: 12,
     color: "#666",
@@ -195,43 +275,43 @@ const baseStyles: {
 };
  
 const light = StyleSheet.create({
-  ...baseStyles,
+  ...Styles,
   container: {
-    ...baseStyles.container,
+    ...Styles.container,
     backgroundColor: "#e5e5e5",
   },
   title: {
-    ...baseStyles.title,
+    ...Styles.title,
     color: "#000",
   },
   searchBar: {
-    ...baseStyles.searchBar,
+    ...Styles.searchBar,
     backgroundColor: "#e2e0e0ff",
     color: "#000",
   },
   menuText: {
-    ...baseStyles.menuText,
+    ...Styles.menuText,
     color: "#000",
   },
 });
 
 const dark = StyleSheet.create({
-  ...baseStyles,
+  ...Styles,
   container: {
-    ...baseStyles.container,
+    ...Styles.container,
     backgroundColor: "#111",
   },
   title: {
-    ...baseStyles.title,
+    ...Styles.title,
     color: "#fff",
   },
     searchBar: {
-    ...baseStyles.searchBar,
+    ...Styles.searchBar,
     backgroundColor: "#f2f2f2",
     color: "#ffffffff",
   },
   menuText: {
-    ...baseStyles.menuText,
+    ...Styles.menuText,
     color: "#fff",
   },
 });

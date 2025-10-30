@@ -16,7 +16,6 @@ export default function ProfileScreen() {
 
       <Image source={{ uri: placeholderImage }} style={styles.avatar} />
 
-
       <View style={styles.achievementsContainer}>
         <View style={styles.achievement}>
           <Text style={styles.achievementText}>🌟 Newbie</Text>
@@ -86,7 +85,7 @@ type Styles = {
   menuText: TextStyle;
 };
 
-const baseStyles: Styles = {
+const Styles: Styles = {
   container: {
     flex: 1,
     alignItems: 'center',
@@ -163,37 +162,37 @@ const baseStyles: Styles = {
 };
 
 const light = StyleSheet.create<Styles>({
-  ...baseStyles,
+  ...Styles,
   container: {
-    ...baseStyles.container,
+    ...Styles.container,
     backgroundColor: '#e5e5e5',
   },
   title: {
-    ...baseStyles.title,
+    ...Styles.title,
     color: '#000',
   },
   menuText: {
-    ...baseStyles.menuText,
+    ...Styles.menuText,
     color: '#000',
   },
 });
 
 const dark = StyleSheet.create<Styles>({
-  ...baseStyles,
+  ...Styles,
   container: {
-    ...baseStyles.container,
+    ...Styles.container,
     backgroundColor: '#111',
   },
   title: {
-    ...baseStyles.title,
+    ...Styles.title,
     color: '#fff',
   },
   menuText: {
-    ...baseStyles.menuText,
+    ...Styles.menuText,
     color: '#fff',
   },
   rankBarBackground: {
-    ...baseStyles.rankBarBackground,
+    ...Styles.rankBarBackground,
     backgroundColor: '#222',
     borderColor: '#333',
   },
