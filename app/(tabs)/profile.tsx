@@ -51,7 +51,8 @@ const ProfileScreen = () => {
         <TouchableOpacity style={styles.menuButton}>
           <Text style={styles.menuText}>Bodymap</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuButton}>
+          <TouchableOpacity style={styles.menuButton}
+          onPress={() => router.push('/profile_screens/ranks')}>
           <Text style={styles.menuText}>Ranks</Text>
         </TouchableOpacity>
           <TouchableOpacity style={styles.menuButton}
