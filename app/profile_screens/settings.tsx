@@ -9,8 +9,6 @@ export default function Settings() {
   const styles = isDarkMode ? dark : light;
   const router = useRouter();
 
-
-
   return (
     <>
       <Stack.Screen
@@ -117,7 +115,9 @@ export default function Settings() {
                 />
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.menuButton, { borderBottomWidth: 0 }]}>
+            <TouchableOpacity style={[styles.menuButton, { borderBottomWidth: 0 }]}
+            onPress={() => router.push("../velkommen/Velkommen")} 
+            >
               <View style={styles.menuRow}>
                 <Ionicons name="log-out-outline" size={22} color="#f87171" />
                 <Text style={[styles.menuText, { color: "#f87171" }]}>Log out</Text>
