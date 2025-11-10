@@ -1,10 +1,10 @@
-import UpperBody from "@/assets/images/UpperbodyIcon.png";
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { DateData, WeekCalendar } from 'react-native-calendars';
+import UpperBody from "../../assets/images/UpperbodyIcon.png";
+import { Colors } from '../../constants/theme';
+import { useColorScheme } from '../../hooks/use-color-scheme';
 
 
 type Workout = {
