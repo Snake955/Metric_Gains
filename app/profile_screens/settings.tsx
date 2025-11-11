@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Image, ImageStyle, ScrollView, StyleSheet, Text, TextInput, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
-import { getStoredSpotifyToken, loginToSpotify } from "../utils/spotifyAuth";
 
 
 export default function Settings() {
@@ -11,24 +10,6 @@ export default function Settings() {
   const styles = isDarkMode ? dark : light;
   const router = useRouter();
 
-    const [spotifyConnected, setSpotifyConnected] = useState(false);
-
-  useEffect(() => {
-    const checkSpotifyConnection = async () => {
-      const token = await getStoredSpotifyToken();
-      setSpotifyConnected(!!token);
-    };
-    checkSpotifyConnection();
-  }, []);
-
-  const handleSpotifyLogin = async () => {
-    try {
-      const result = await loginToSpotify();
-      if (result) setSpotifyConnected(true);
-    } catch (error) {
-      console.error("Spotify login failed:", error);
-    }
-  };
 
 
   return (
@@ -137,9 +118,7 @@ export default function Settings() {
                 />
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.menuButton, { borderBottomWidth: 0 }]}
-            onPress={() => router.push("../velkommen/Velkommen")} 
-            >
+            <TouchableOpacity style={[styles.menuButton, { borderBottomWidth: 0 }]}>
               <View style={styles.menuRow}>
                 <Ionicons name="log-out-outline" size={22} color="#f87171" />
                 <Text style={[styles.menuText, { color: "#f87171" }]}>Log out</Text>
