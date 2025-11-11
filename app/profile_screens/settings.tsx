@@ -1,13 +1,35 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Image, ImageStyle, ScrollView, StyleSheet, Text, TextInput, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
+import { getStoredSpotifyToken, loginToSpotify } from "../utils/spotifyAuth";
+
 
 export default function Settings() {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === "dark";
   const styles = isDarkMode ? dark : light;
   const router = useRouter();
+
+    const [spotifyConnected, setSpotifyConnected] = useState(false);
+
+  useEffect(() => {
+    const checkSpotifyConnection = async () => {
+      const token = await getStoredSpotifyToken();
+      setSpotifyConnected(!!token);
+    };
+    checkSpotifyConnection();
+  }, []);
+
+  const handleSpotifyLogin = async () => {
+    try {
+      const result = await loginToSpotify();
+      if (result) setSpotifyConnected(true);
+    } catch (error) {
+      console.error("Spotify login failed:", error);
+    }
+  };
+
 
   return (
     <>
@@ -137,19 +159,34 @@ export default function Settings() {
       <Ionicons name="chevron-forward-outline" size={18} color="#fff" />
     </View>
   </TouchableOpacity>
-  <TouchableOpacity style={styles.spotifyButton}>
-    <View style={styles.musicButtonRow}>
-      <Image
-        source={{
-          uri: "https://e7.pngegg.com/pngimages/4/438/png-clipart-spotify-logo-spotify-mobile-app-computer-icons-app-store-music-free-icon-spotify-miscellaneous-logo.png",
-        }}
-        style={styles.spotifyLogo}
-      />
-      <Text style={[styles.musicButtonText, { color: "#000" }]}>
-        Login to Spotify</Text>
-      <Ionicons name="chevron-forward-outline" size={18} color="#000" />
-    </View>
-  </TouchableOpacity>
+<TouchableOpacity
+  style={styles.spotifyButton}
+  onPress={handleSpotifyLogin}
+  activeOpacity={0.85}
+>
+  <View style={styles.musicButtonRow}>
+    <Image
+      source={{
+        uri: "https://e7.pngegg.com/pngimages/4/438/png-clipart-spotify-logo-spotify-mobile-app-computer-icons-app-store-music-free-icon-spotify-miscellaneous-logo.png",
+      }}
+      style={styles.spotifyLogo}
+    />
+    <Text
+      style={[
+        styles.musicButtonText,
+        { color: "#000" },
+      ]}
+    >
+      {spotifyConnected ? "Connected to Spotify" : "Login to Spotify"}
+    </Text>
+    <Ionicons
+      name="chevron-forward-outline"
+      size={18}
+      color="#000"
+    />
+  </View>
+</TouchableOpacity>
+
 </View>
       <Text style={styles.footer}>© Metric Gains 2025</Text>
       </ScrollView>

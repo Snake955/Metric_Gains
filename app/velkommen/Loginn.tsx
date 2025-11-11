@@ -104,7 +104,7 @@ export default function Login() {
                   style={styles.eyeToggle}
                   hitSlop={8}
                 >
-                  <AntDesign name={showPass ? "eye" : "eyeo"} size={18} color="#111"/>
+                  <AntDesign name={showPass ? "eye" : "eye"} size={18} color="#111"/>
                 </TouchableOpacity>
               </View>
 

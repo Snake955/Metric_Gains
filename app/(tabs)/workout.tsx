@@ -1,12 +1,17 @@
 import { Picker } from "@react-native-picker/picker";
 import React, { useEffect, useRef, useState } from "react";
-import { Button, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
+import { Button, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const PADDING1 = 16;
 const COLOR_BACK = "#e5e5e5";
 
 const DEFAULT_WORKOUT = [
+    {
+    id: "jog",
+    name: "Joggetur",
+    exercises: [],
+  },
   {
     id: "push1",
     name: "Push Day",
