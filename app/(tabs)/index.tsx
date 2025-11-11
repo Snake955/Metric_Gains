@@ -1,10 +1,10 @@
+import SpotifyLogo from "@/assets/images/spotify-blue.png";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import React from "react";
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import * as Progress from "react-native-progress";
-import SpotifyLogo from "../../assets/images/spotify-blue.png";
-import { ThemedText } from "../../components/themed-text";
-import { ThemedView } from "../../components/themed-view";
-import { IconSymbol } from "../../components/ui/icon-symbol";
 
 
 export default function HomeScreen() {
