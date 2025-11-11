@@ -128,7 +128,7 @@ export default function Login() {
 
             <View style={styles.bottomSection}>
               <Text style={styles.bottomTitle}>Ny til klubben?</Text>
-              <TouchableOpacity onPress={() => router.push("/auth/register")}>
+              <TouchableOpacity onPress={() => router.push("../auth/register")}>
                 <Text style={styles.bottomLink}>Registrer deg nå!</Text>
               </TouchableOpacity>
             </View>
