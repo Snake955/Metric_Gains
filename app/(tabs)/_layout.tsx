@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 
+import { HapticTab } from '@/components/haptic-tab';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Image } from 'react-native';
-import { HapticTab } from '../../components/haptic-tab';
-import { IconSymbol } from '../../components/ui/icon-symbol';
-import { Colors } from '../../constants/theme';
-import { useColorScheme } from '../../hooks/use-color-scheme';
 //import { KeyboardProvider } from "react-native-keyboard-controller";
 //import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -37,7 +37,6 @@ export default function TabLayout() {
     },
   }}
     >
-      
       <Tabs.Screen
         name="index"
         options={{
@@ -53,7 +52,7 @@ export default function TabLayout() {
         options={{
           title: 'Community',
           tabBarIcon: ({ color }) => (
-            <Image source={require("../../assets/images/globe-alt.png")}
+            <Image source={require("@/assets/images/globe-alt.png")}
             style={{width: 28, height: 28, tintColor: color}}
             />
           ),

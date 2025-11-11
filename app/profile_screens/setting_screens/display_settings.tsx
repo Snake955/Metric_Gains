@@ -51,6 +51,7 @@ export default function DisplaySettings() {
               </View>
             </TouchableOpacity>
 
+
           </View>
       </ScrollView>
     </>
