@@ -1,54 +1,77 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authorize, refresh } from 'react-native-app-auth';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as AuthSession from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
 
-const Config = {
-  clientId: 'e716b7afacd54a93940cb4c88f6bafd8',
-  clientSecret: '781319718e014ebfa27d7370a4efb939',
-  redirectUrl: 'exp://192.168.0.84:8081',
-  scopes: [ 'user-read-email',
-    'playlist-read-private',
-    'user-read-private',
-    'user-read-playback-state',
-    'user-modify-playback-state',
-    'user-read-currently-playing',],
-  serviceConfiguration: {
-    authorizationEndpoint: 'https://accounts.spotify.com/authorize',
-    tokenEndpoint: 'https://accounts.spotify.com/api/token',
-  },
+WebBrowser.maybeCompleteAuthSession();
+
+const clientId = "e716b7afacd54a93940cb4c88f6bafd8";
+
+const scopes = [
+  "user-read-email",
+  "playlist-read-private", 
+  "user-read-private",
+  "user-read-playback-state",
+  "user-modify-playback-state",
+  "user-read-currently-playing",
+];
+
+// For Expo Go - denne vil automatisk fungere
+const redirectUri = AuthSession.makeRedirectUri();
+
+console.log('Redirect URI:', redirectUri);
+
+const discovery = {
+  authorizationEndpoint: "https://accounts.spotify.com/authorize",
+  tokenEndpoint: "https://accounts.spotify.com/api/token",
 };
 
 export async function loginToSpotify() {
-    try {
-        const result = await authorize(Config);
-        await AsyncStorage.setItem('spotifyAccessToken', result.accessToken);
-        await AsyncStorage.setItem('spotifyRefreshToken', result.refreshToken || '');
-
-        console.log('Spotify login successful');
-        return result;
-    } catch (error) {
-        console.error('Error during Spotify login', error);
-    }
-
-}
-
-export async function getStoredSpotifyToken() {
-  const token = await AsyncStorage.getItem('spotifyAccessToken');
-  return token;
-}
-
-export async function refreshSpotifyToken() {
-  const refreshToken = await AsyncStorage.getItem('spotifyRefreshToken');
-  if (!refreshToken) return null;
-
   try {
-    const result = await refresh(Config, { refreshToken });
-    await AsyncStorage.setItem('spotifyAccessToken', result.accessToken);
-    console.log('Token refreshed');
-    return result;
+    console.log("Starting Spotify login...");
+    
+    // Opprett auth request
+    const authRequest = new AuthSession.AuthRequest({
+      clientId,
+      scopes,
+      redirectUri,
+      usePKCE: false,
+    });
+
+    // Kjør auth flow
+    const result = await authRequest.promptAsync(discovery);
+
+    console.log("Auth result:", result);
+
+    if (result.type === "success" && result.params.access_token) {
+      const token = result.params.access_token;
+      await AsyncStorage.setItem("spotifyAccessToken", token);
+      console.log("Spotify login successful!");
+      return token;
+    } else {
+      console.log("Spotify login cancelled or failed:", result.type);
+      return null;
+    }
   } catch (error) {
-    console.error('Token refresh error:', error);
+    console.error("Spotify login error:", error);
+    return null;
   }
 }
 
+export async function getStoredSpotifyToken() {
+  try {
+    const token = await AsyncStorage.getItem("spotifyAccessToken");
+    return token;
+  } catch (error) {
+    console.error("Error getting token:", error);
+    return null;
+  }
+}
 
-
+export async function logoutFromSpotify() {
+  try {
+    await AsyncStorage.removeItem("spotifyAccessToken");
+    console.log("Spotify logout successful");
+  } catch (error) {
+    console.error("Spotify logout error:", error);
+  }
+}

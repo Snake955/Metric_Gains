@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Image, ImageStyle, ScrollView, StyleSheet, Text, TextInput, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
+import { getStoredSpotifyToken, loginToSpotify } from "../utils/spotifyAuth";
 
 
 export default function Settings() {
@@ -10,6 +11,24 @@ export default function Settings() {
   const styles = isDarkMode ? dark : light;
   const router = useRouter();
 
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+
+  useEffect(() => {
+    const checkSpotifyConnection = async () => {
+      const token = await getStoredSpotifyToken();
+      setSpotifyConnected(!!token);
+    };
+    checkSpotifyConnection();
+  }, []);
+
+  const handleSpotifyLogin = async () => {
+    try {
+      const result = await loginToSpotify();
+      if (result) setSpotifyConnected(true);
+    } catch (error) {
+      console.error("Spotify login failed:", error);
+    }
+  };
 
 
   return (
@@ -110,7 +129,7 @@ export default function Settings() {
                   size={22}
                   color={isDarkMode ? "#fff" : "#000"}
                 />
-                <Text style={styles.menuText}>Notifications</Text>
+                <Text style={styles.menuText}>Notifations</Text>
                 <Ionicons
                   name="chevron-forward-outline"
                   size={18}
@@ -165,6 +184,7 @@ export default function Settings() {
     />
   </View>
 </TouchableOpacity>
+
 
 </View>
       <Text style={styles.footer}>© Metric Gains 2025</Text>
