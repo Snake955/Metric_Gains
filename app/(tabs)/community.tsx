@@ -2,6 +2,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 
@@ -13,58 +14,64 @@ export default function CommunityScreen() {
 };
 
   return(
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Community</Text>
-      </View>
-      <View style={styles.searchArea}>
-      <View style={styles.searchBar}> 
-        <IconSymbol name="magnifyingglass" size={24} color="#3f3f3fff" style={styles.searchIcon}/>
-       
-        <TextInput
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Community</Text>
+        </View>
+        <View style={styles.searchArea}>
+        <View style={styles.searchBar}> 
+          <IconSymbol name="magnifyingglass" size={24} color="#3f3f3fff" style={styles.searchIcon}/>
         
-          style={styles.searchInput}
-          placeholder="Search"
-          value={search}
-          onChangeText={updateSearch}
-          />
+          <TextInput
           
-      </View>
-      <TouchableOpacity style={styles.filterBtn}>
-        <Ionicons name="filter" size={30} color="black" />
-      </TouchableOpacity>
-      </View>
-      <View>
-        <Text style={styles.sectionTitle}>Workouts</Text>
-      </View>
-      <View style={styles.friendCard}>
+            style={styles.searchInput}
+            placeholder="Search"
+            value={search}
+            onChangeText={updateSearch}
+            />
+            
+        </View>
+        <TouchableOpacity style={styles.filterBtn}>
+          <Ionicons name="filter" size={30} color="black" />
+        </TouchableOpacity>
+        </View>
         <View>
-          <Text style={styles.cardTitle}>Strength</Text>
-          <Text style={styles.cardTime}>Duration: 1h</Text>
-          <Text style={styles.cardText}>Focus: Arms</Text>
-          <Text style={styles.cardText}>Exercises: 3</Text>
+          <Text style={styles.sectionTitle}>Workouts</Text>
+        </View>
+        <View style={styles.friendCard}>
+          <View>
+            <Text style={styles.cardTitle}>Strength</Text>
+            <Text style={styles.cardTime}>Duration: 1h</Text>
+            <Text style={styles.cardText}>Focus: Arms</Text>
+            <Text style={styles.cardText}>Exercises: 3</Text>
+          </View>
+        </View>
+        <View style={styles.friendCard}>
+          <View>
+            <Text style={styles.cardTitle}>Cardio</Text>
+            <Text style={styles.cardTime}>Duration: 2h 30min</Text>
+            <Text style={styles.cardText}>Focus: Upper Body</Text>
+            <Text style={styles.cardText}>Exercises: 5</Text>
+          </View>
         </View>
       </View>
-      <View style={styles.friendCard}>
-        <View>
-          <Text style={styles.cardTitle}>Cardio</Text>
-          <Text style={styles.cardTime}>Duration: 2h 30min</Text>
-          <Text style={styles.cardText}>Focus: Upper Body</Text>
-          <Text style={styles.cardText}>Exercises: 5</Text>
-        </View>
-      </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1
+  },
+
   container: { 
     flex: 1, 
     paddingHorizontal: 5, 
     paddingTop: 10,
   },
 
-    header: { 
+  header: { 
     flexDirection: "row", 
     justifyContent: "center", 
     alignItems: "center", 

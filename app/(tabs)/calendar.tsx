@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CalendarProvider, WeekCalendar } from 'react-native-calendars';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CalendarScreen() {
   const colorScheme = useColorScheme();
@@ -22,122 +23,128 @@ export default function CalendarScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Calendar</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => {}}>
-          <Ionicons name="add" size={28} color={"#000000ff"} />
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.currentMonth}>
-        {monthLabel(visibleMonth.year, visibleMonth.month)}
-      </Text>
-
-      <View style={styles.WeekCal}>
-        <CalendarProvider
-          date={selected}
-          onDateChanged={(dateString) => {
-            setSelected(dateString);
-            const d = new Date(dateString);
-            setVisibleMonth({ year: d.getFullYear(), month: d.getMonth() + 1 });
-          }}
-          onMonthChange={(m) => {
-            // m: {year, month, day, timestamp, dateString}
-            setVisibleMonth({ year: m.year, month: m.month });
-          }}
-
-        >
-          <WeekCalendar
-            firstDay={1}
-            style={{ paddingHorizontal: 0 }}
-            dayComponent={({ date, state }) => {
-              const isToday = date?.dateString === today;
-              const isSelected = date?.dateString === selected;
-
-              return (
-                <TouchableOpacity
-                  onPress={() => date?.dateString && setSelected(date.dateString)}
-                  hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
-                  activeOpacity={0.7}
-                  style={{
-                    alignItems: "center",
-                    justifyContent: "center",
-                    paddingVertical: 6,
-                  }}
-                >
-                  <View
-                    style={[
-                      {
-                        minWidth: 32,
-                        minHeight: 32,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: 16,
-                      },
-                      isSelected && {
-                        backgroundColor: "#ffffff", // fylt hvit sirkel for valgt dag
-                      },
-                    ]}
-                  >
-                    <Text
-                      allowFontScaling={false}
-                      style={{
-                        textAlign: "center",
-                        includeFontPadding: false,
-                        color: isToday ? tint : "#000000ff", // blå tekst for dagens dato
-                        opacity: state === "disabled" ? 0.4 : 1,
-                      }}
-                    >
-                      {date?.day ?? ""}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            }}
-            
-            theme={{
-              calendarBackground: '#f2f2f2'
-            }}
-          />
-        </CalendarProvider>
-      </View>
-
-      <Text style={styles.sectionTitle}>My workouts</Text>
-      <View style={styles.card}>
-        <View style={styles.cardLeftContent}>
-          <Text style={styles.cardTitle}>Strength</Text>
-          <Text style={styles.cardTime}>10:00 - 14:00</Text>
-          <Text>    </Text>
-          <Text style={styles.cardText}>Focus: Upper Body</Text>
-          <Text style={styles.cardText}>Exercises: 8</Text>
-        </View>
-
-        <View style={styles.cardRightContent}>
-          <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
-          <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9"}]}>
-            <Text style={styles.btnText}>Change</Text>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Calendar</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => {}}>
+            <Ionicons name="add" size={28} color={"#000000ff"} />
           </TouchableOpacity>
         </View>
-      </View>
 
-      <Text style={styles.sectionTitle}>Friend workouts</Text>
-      <View style={styles.friendCard}>
-        <View>
-          <Text style={styles.cardTitle}>Strength</Text>
-          <Text style={styles.cardTime}>12:00 - 14:00</Text>
-          <Text style={styles.cardText}>Focus: Arms</Text>
+        <Text style={styles.currentMonth}>
+          {monthLabel(visibleMonth.year, visibleMonth.month)}
+        </Text>
+
+        <View style={styles.WeekCal}>
+          <CalendarProvider
+            date={selected}
+            onDateChanged={(dateString) => {
+              setSelected(dateString);
+              const d = new Date(dateString);
+              setVisibleMonth({ year: d.getFullYear(), month: d.getMonth() + 1 });
+            }}
+            onMonthChange={(m) => {
+              // m: {year, month, day, timestamp, dateString}
+              setVisibleMonth({ year: m.year, month: m.month });
+            }}
+
+          >
+            <WeekCalendar
+              firstDay={1}
+              style={{ paddingHorizontal: 0 }}
+              dayComponent={({ date, state }) => {
+                const isToday = date?.dateString === today;
+                const isSelected = date?.dateString === selected;
+
+                return (
+                  <TouchableOpacity
+                    onPress={() => date?.dateString && setSelected(date.dateString)}
+                    hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+                    activeOpacity={0.7}
+                    style={{
+                      alignItems: "center",
+                      justifyContent: "center",
+                      paddingVertical: 6,
+                    }}
+                  >
+                    <View
+                      style={[
+                        {
+                          minWidth: 32,
+                          minHeight: 32,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: 16,
+                        },
+                        isSelected && {
+                          backgroundColor: "#ffffff", // fylt hvit sirkel for valgt dag
+                        },
+                      ]}
+                    >
+                      <Text
+                        allowFontScaling={false}
+                        style={{
+                          textAlign: "center",
+                          includeFontPadding: false,
+                          color: isToday ? tint : "#000000ff", // blå tekst for dagens dato
+                          opacity: state === "disabled" ? 0.4 : 1,
+                        }}
+                      >
+                        {date?.day ?? ""}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+              
+              theme={{
+                calendarBackground: '#f2f2f2'
+              }}
+            />
+          </CalendarProvider>
         </View>
 
-        <TouchableOpacity style={[styles.joinBtn, { borderColor: tint }]}>
-          <Text style={[styles.joinText, { color: tint }]}>Join</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <Text style={styles.sectionTitle}>My workouts</Text>
+        <View style={styles.card}>
+          <View style={styles.cardLeftContent}>
+            <Text style={styles.cardTitle}>Strength</Text>
+            <Text style={styles.cardTime}>10:00 - 14:00</Text>
+            <Text>    </Text>
+            <Text style={styles.cardText}>Focus: Upper Body</Text>
+            <Text style={styles.cardText}>Exercises: 8</Text>
+          </View>
+
+          <View style={styles.cardRightContent}>
+            <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
+            <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9"}]}>
+              <Text style={styles.btnText}>Change</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>Friend workouts</Text>
+        <View style={styles.friendCard}>
+          <View>
+            <Text style={styles.cardTitle}>Strength</Text>
+            <Text style={styles.cardTime}>12:00 - 14:00</Text>
+            <Text style={styles.cardText}>Focus: Arms</Text>
+          </View>
+
+          <TouchableOpacity style={[styles.joinBtn, { borderColor: tint }]}>
+            <Text style={[styles.joinText, { color: tint }]}>Join</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1
+  },
+
   container: { 
     flex: 1, 
     paddingHorizontal: 5, 
