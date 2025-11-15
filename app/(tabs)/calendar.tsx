@@ -4,16 +4,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { CalendarProvider, DateData, WeekCalendar } from 'react-native-calendars';
-
-
-type Workout = {
-  type: string;
-  time: number;
-  focus: string;
-  exercises: number;
-  user?: string;
-};
+import { CalendarProvider, WeekCalendar } from 'react-native-calendars';
 
 export default function CalendarScreen() {
   const colorScheme = useColorScheme();
@@ -26,18 +17,10 @@ export default function CalendarScreen() {
     month: new Date().getMonth() + 1,
   });
 
-  const markedDates = {
-    [selected]: {
-      selected: true,
-      selectedColor: "#ffffffff",
-    }
-  }
-
   function monthLabel(year: number, month: number) {
     return new Date(year, month - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
   }
 
-  
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -50,6 +33,7 @@ export default function CalendarScreen() {
       <Text style={styles.currentMonth}>
         {monthLabel(visibleMonth.year, visibleMonth.month)}
       </Text>
+
       <View style={styles.WeekCal}>
         <CalendarProvider
           date={selected}
@@ -62,17 +46,57 @@ export default function CalendarScreen() {
             // m: {year, month, day, timestamp, dateString}
             setVisibleMonth({ year: m.year, month: m.month });
           }}
+
         >
           <WeekCalendar
             firstDay={1}
-            onDayPress={(day: DateData) => setSelected(day.dateString)}
-            markedDates={markedDates}
+            style={{ paddingHorizontal: 0 }}
+            dayComponent={({ date, state }) => {
+              const isToday = date?.dateString === today;
+              const isSelected = date?.dateString === selected;
+
+              return (
+                <TouchableOpacity
+                  onPress={() => date?.dateString && setSelected(date.dateString)}
+                  hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+                  activeOpacity={0.7}
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    paddingVertical: 6,
+                  }}
+                >
+                  <View
+                    style={[
+                      {
+                        minWidth: 32,
+                        minHeight: 32,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: 16,
+                      },
+                      isSelected && {
+                        backgroundColor: "#ffffff", // fylt hvit sirkel for valgt dag
+                      },
+                    ]}
+                  >
+                    <Text
+                      allowFontScaling={false}
+                      style={{
+                        textAlign: "center",
+                        includeFontPadding: false,
+                        color: isToday ? tint : "#000000ff", // blå tekst for dagens dato
+                        opacity: state === "disabled" ? 0.4 : 1,
+                      }}
+                    >
+                      {date?.day ?? ""}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
+            
             theme={{
-              selectedDayBackgroundColor: '#ffffffff',
-              selectedDayTextColor: '#000000ff',
-              todayTextColor: tint,
-              dayTextColor: '#000000ff',
-              backgroundColor: '#001333ff',
               calendarBackground: '#f2f2f2'
             }}
           />
@@ -96,7 +120,6 @@ export default function CalendarScreen() {
           </TouchableOpacity>
         </View>
       </View>
-
 
       <Text style={styles.sectionTitle}>Friend workouts</Text>
       <View style={styles.friendCard}>
@@ -124,8 +147,7 @@ const styles = StyleSheet.create({
   WeekCal: {
     borderRadius:20,
     overflow: "hidden",
-    justifyContent: "center",
-  
+    marginHorizontal: -5,
   },
 
   header: { 
