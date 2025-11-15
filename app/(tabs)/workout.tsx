@@ -21,6 +21,11 @@ type Workout = {
 };
 
 const DEFAULT_WORKOUT = [
+    {
+    id: "jog",
+    name: "Joggetur",
+    exercises: [],
+  },
   {
     id: "new",
     name: "Start ny workout...",
