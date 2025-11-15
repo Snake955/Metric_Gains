@@ -106,34 +106,38 @@ export default function CalendarScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>My workouts</Text>
-        <View style={styles.card}>
-          <View style={styles.cardLeftContent}>
-            <Text style={styles.cardTitle}>Strength</Text>
-            <Text style={styles.cardTime}>10:00 - 14:00</Text>
-            <Text>    </Text>
-            <Text style={styles.cardText}>Focus: Upper Body</Text>
-            <Text style={styles.cardText}>Exercises: 8</Text>
-          </View>
+        <View style={styles.body}>
+          <View style={styles.card}>
+            <View style={styles.cardLeftContent}>
+              <Text style={styles.cardTitle}>Strength</Text>
+              <Text style={styles.cardTime}>10:00 - 14:00</Text>
+              <Text>    </Text>
+              <Text style={styles.cardText}>Focus: Upper Body</Text>
+              <Text style={styles.cardText}>Exercises: 8</Text>
+            </View>
 
-          <View style={styles.cardRightContent}>
-            <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
-            <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9"}]}>
-              <Text style={styles.btnText}>Change</Text>
-            </TouchableOpacity>
+            <View style={styles.cardRightContent}>
+              <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
+              <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9"}]}>
+                <Text style={styles.btnText}>Change</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
         <Text style={styles.sectionTitle}>Friend workouts</Text>
-        <View style={styles.friendCard}>
-          <View>
-            <Text style={styles.cardTitle}>Strength</Text>
-            <Text style={styles.cardTime}>12:00 - 14:00</Text>
-            <Text style={styles.cardText}>Focus: Arms</Text>
-          </View>
+        <View style={styles.body}>
+          <View style={styles.friendCard}>
+            <View>
+              <Text style={styles.cardTitle}>Strength</Text>
+              <Text style={styles.cardTime}>12:00 - 14:00</Text>
+              <Text style={styles.cardText}>Focus: Arms</Text>
+            </View>
 
-          <TouchableOpacity style={[styles.joinBtn, { borderColor: tint }]}>
-            <Text style={[styles.joinText, { color: tint }]}>Join</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.joinBtn, { borderColor: tint }]}>
+              <Text style={[styles.joinText, { color: tint }]}>Join</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -163,6 +167,10 @@ const styles = StyleSheet.create({
     alignItems: "center", 
     marginBottom: 1,
     position: "relative",
+  },
+
+  body: {
+    paddingHorizontal: 15,
   },
 
   title: { 

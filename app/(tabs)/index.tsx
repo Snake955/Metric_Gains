@@ -51,69 +51,72 @@ const [displayName, setDisplayName] = useState<string | null>(null);
         <ThemedText type="subtitle" style={styles.sectionTitle}>
           Today’s activity
         </ThemedText>
-        <View style={styles.activityRow}>
-          <ThemedView style={styles.activityCard}>
-            <Progress.Circle
-              size={100}
-              progress={6742 / 10000}
-              thickness={8}
-              color="#2D7FF9"
-              showsText={false}
-            />
-            <ThemedText type="defaultSemiBold">6742 steps</ThemedText>
-            <ThemedText type="default">10,000 goal</ThemedText>
+
+        <View style={styles.body}>
+          <View style={styles.activityRow}>
+            <ThemedView style={styles.activityCard}>
+              <Progress.Circle
+                size={100}
+                progress={6742 / 10000}
+                thickness={8}
+                color="#2D7FF9"
+                showsText={false}
+              />
+              <ThemedText type="defaultSemiBold">6742 steps</ThemedText>
+              <ThemedText type="default">10,000 goal</ThemedText>
+            </ThemedView>
+
+            <ThemedView style={styles.activityCard}>
+              <Progress.Circle
+                size={100}
+                progress={240 / 500}
+                thickness={8}
+                color="#2D7FF9"
+                showsText={false}
+              />
+              <ThemedText type="defaultSemiBold">240 kcal</ThemedText>
+              <ThemedText type="default">500 goal</ThemedText>
+            </ThemedView>
+          </View>
+
+          {/* Last Workout */}
+          <ThemedView style={styles.workoutCard}>
+            <View style={styles.workoutHeader}>
+              <ThemedText type="defaultSemiBold">Last workout</ThemedText>
+              <ThemedText type="default">Friday, 12 Sept - 18:30</ThemedText>
+            </View>
+            <ThemedText>Category: Strength</ThemedText>
+            <ThemedText>Duration: 1h 32min</ThemedText>
+            <ThemedText>Calories burned: 420 kcal</ThemedText>
+            <ThemedText>Exercises: 8</ThemedText>
+            <ThemedText>Focus: Upper body</ThemedText>
           </ThemedView>
 
-          <ThemedView style={styles.activityCard}>
-            <Progress.Circle
-              size={100}
-              progress={240 / 500}
-              thickness={8}
-              color="#2D7FF9"
-              showsText={false}
-            />
-            <ThemedText type="defaultSemiBold">240 kcal</ThemedText>
-            <ThemedText type="default">500 goal</ThemedText>
+          {/* Music API 
+          Denne blir fjernet senere for at vi skal ha den som en widget og ikke bare fast på en side
+          */}
+          <ThemedView style={styles.musicControls}>
+            <TouchableOpacity>
+              <IconSymbol name="shuffle" size={26} color="#888" />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <IconSymbol name="chevron.left" size={26} color="#888" />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <IconSymbol name="play.circle.fill" size={42} color="#888" />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <IconSymbol name="chevron.right" size={26} color="#888" />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <IconSymbol name="repeat" size={26} color="#888" />
+            </TouchableOpacity>
           </ThemedView>
+          <View style={styles.spotifyRow}>
+            <ThemedText style={styles.spotifyText}>Spotify®</ThemedText>
+            <Image source={SpotifyLogo} style={styles.spotifyIcon} resizeMode="contain" />
+          </View>
         </View>
-
-        {/* Last Workout */}
-        <ThemedView style={styles.workoutCard}>
-          <View style={styles.workoutHeader}>
-            <ThemedText type="defaultSemiBold">Last workout</ThemedText>
-            <ThemedText type="default">Friday, 12 Sept - 18:30</ThemedText>
-          </View>
-          <ThemedText>Category: Strength</ThemedText>
-          <ThemedText>Duration: 1h 32min</ThemedText>
-          <ThemedText>Calories burned: 420 kcal</ThemedText>
-          <ThemedText>Exercises: 8</ThemedText>
-          <ThemedText>Focus: Upper body</ThemedText>
-        </ThemedView>
-
-        {/* Music API 
-        Denne blir fjernet senere for at vi skal ha den som en widget og ikke bare fast på en side
-        */}
-        <ThemedView style={styles.musicControls}>
-          <TouchableOpacity>
-            <IconSymbol name="shuffle" size={26} color="#888" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <IconSymbol name="chevron.left" size={26} color="#888" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <IconSymbol name="play.circle.fill" size={42} color="#888" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <IconSymbol name="chevron.right" size={26} color="#888" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <IconSymbol name="repeat" size={26} color="#888" />
-          </TouchableOpacity>
-        </ThemedView>
-        <View style={styles.spotifyRow}>
-          <ThemedText style={styles.spotifyText}>Spotify®</ThemedText>
-          <Image source={SpotifyLogo} style={styles.spotifyIcon} resizeMode="contain" />
-          </View>
 
       </ScrollView>
     </SafeAreaView>
@@ -135,11 +138,17 @@ const styles = StyleSheet.create({
     color: "#888",
     fontSize:10,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 5,
   },
+
+  body: {
+    paddingHorizontal: 15,
+  },
+
   topbar_index: {
     fontSize:22,
     paddingTop:10,

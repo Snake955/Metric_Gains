@@ -39,20 +39,22 @@ export default function CommunityScreen() {
         <View>
           <Text style={styles.sectionTitle}>Workouts</Text>
         </View>
-        <View style={styles.friendCard}>
-          <View>
-            <Text style={styles.cardTitle}>Strength</Text>
-            <Text style={styles.cardTime}>Duration: 1h</Text>
-            <Text style={styles.cardText}>Focus: Arms</Text>
-            <Text style={styles.cardText}>Exercises: 3</Text>
+        <View style={styles.body}>
+          <View style={styles.friendCard}>
+            <View>
+              <Text style={styles.cardTitle}>Strength</Text>
+              <Text style={styles.cardTime}>Duration: 1h</Text>
+              <Text style={styles.cardText}>Focus: Arms</Text>
+              <Text style={styles.cardText}>Exercises: 3</Text>
+            </View>
           </View>
-        </View>
-        <View style={styles.friendCard}>
-          <View>
-            <Text style={styles.cardTitle}>Cardio</Text>
-            <Text style={styles.cardTime}>Duration: 2h 30min</Text>
-            <Text style={styles.cardText}>Focus: Upper Body</Text>
-            <Text style={styles.cardText}>Exercises: 5</Text>
+          <View style={styles.friendCard}>
+            <View>
+              <Text style={styles.cardTitle}>Cardio</Text>
+              <Text style={styles.cardTime}>Duration: 2h 30min</Text>
+              <Text style={styles.cardText}>Focus: Upper Body</Text>
+              <Text style={styles.cardText}>Exercises: 5</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -77,6 +79,10 @@ const styles = StyleSheet.create({
     alignItems: "center", 
     marginBottom: 1,
     position: "relative",
+  },
+
+  body: {
+    paddingHorizontal: 15,
   },
 
   title: { 
@@ -121,7 +127,7 @@ const styles = StyleSheet.create({
   },
 
    sectionTitle: { 
-    fontSize: 35, 
+    fontSize: 25, 
     fontWeight: "700", 
     marginTop: 12, 
     marginBottom: 6, 
