@@ -1,30 +1,26 @@
+import { FIRESTORE_DB } from '@/FirebaseConfig';
 import { Picker } from "@react-native-picker/picker";
+import { collection, getDocs } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
-import { Button, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
+import { Button, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const PADDING1 = 16;
-const COLOR_BACK = "#e5e5e5";
+type Exercise = {
+  id: string;
+  name: string;
+  muscle_group?: string;
+  sets?: number | string;
+  reps?: number | string;
+  weight?: string;
+};
+
+type Workout = {
+  id: string;
+  name: string;
+  exercises: Exercise[];
+};
 
 const DEFAULT_WORKOUT = [
-  {
-    id: "push1",
-    name: "Push Day",
-    exercises: [
-      { name: "Bench Press", sets: 5, reps: 5, weight: "—" },
-      { name: "Shoulder Press", sets: 3, reps: 10, weight: "—" },
-      { name: "Tricep Pushdown", sets: 3, reps: 12, weight: "—" },
-    ],
-  },
-  {
-    id: "legs1",
-    name: "Leg Day",
-    exercises: [
-      { name: "Back Squat", sets: 5, reps: 5, weight: "—" },
-      { name: "Leg Press", sets: 4, reps: 12, weight: "—" },
-      { name: "Calf Raise", sets: 4, reps: 15, weight: "—" },
-    ],
-  },
   {
     id: "new",
     name: "Start ny workout...",
@@ -32,50 +28,54 @@ const DEFAULT_WORKOUT = [
   },
 ];
 
-type PredefExercise = {
-  id: number;
-  name: string;
-  sets: number;
-  reps: number | string;
-  weight: string;
-};
-
-const workouts: PredefExercise[] = [
-  { id: 1, name: "Bench Press", sets: 4, reps: 10, weight: "60kg" },
-  { id: 2, name: "Squats", sets: 3, reps: 12, weight: "80kg" },
-  { id: 3, name: "Deadlift", sets: 4, reps: 8, weight: "100kg" },
-  { id: 4, name: "Pull Ups", sets: 3, reps: 10, weight: "Body" },
-  { id: 5, name: "Plank", sets: 3, reps: "1min", weight: "-" },
-];
-
-type Exercise = { name: string; sets: number; reps: number | string; weight: string };
-
 export default function WorkoutMain() {
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [timeCount, setTimeCount] = useState(0);
-  const [oldWorkoutDuration, setoldWorkoutDuration] = useState(0);
+  const [lastWorkoutDuration, setLastWorkoutDuration] = useState(0);
   const [startTimer, setStartTimer] = useState<Date | null>(null);
-  const [oldWorkoutStart, setoldWorkoutStart] = useState<Date | null>(null);
-  const [oldWorkoutName, setoldWorkoutName] = useState<string | null>(null);
+  const [lastWorkoutStart, setLastWorkoutStart] = useState<Date | null>(null);
+  const [lastWorkoutName, setLastWorkoutName] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [savedExercises, setSavedExercises] = useState<
-    { id: string; name: string; exercises: Exercise[] }[]
-  >([]);
-  const allWorkouts = [...DEFAULT_WORKOUT, ...savedExercises];
+  const [userWorkouts, setUserWorkouts] = useState<Workout[]>([]);
+  const allWorkouts = [...DEFAULT_WORKOUT, ...userWorkouts];
 
   const [selectedWorkoutId, setSelectedWorkoutId] = useState<string>(
-    DEFAULT_WORKOUT[0]?.id ?? "new"
+    allWorkouts.length > 0 ? String(allWorkouts[0].id) : ""
   );
-  const [ongoingWorkout, setOngoingWorkout] = useState<
-    { id: string; name: string; exercises: Exercise[] } | null
-  >(null);
+  const [ongoingWorkout, setOngoingWorkout] = useState<Workout | null>(null);
+  const [activeExerciseSets, setActiveExerciseSets] = useState<{ [key: string]: { sets: string, reps: string, weight: string } }>({});
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedExercises, setSelectedExercises] = useState<PredefExercise[]>([]);
+  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [exerciseSets, setExerciseSets] = useState<{ [key: string]: { sets: string, reps: string, weight: string } }>({});
+  const [customWorkoutName, setCustomWorkoutName] = useState('');
 
-  function handleStartWorkout() {
+  useEffect(() => {
+    const fetchExercises = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'exercises'));
+        const data = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          name: doc.data().name || doc.id,
+          muscle_group: doc.data().muscle_group,
+          weight: doc.data().weight || "-",
+        }));
+        setExercises(data);
+      } catch (error) {
+        console.error('Error fetching exercises:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExercises();
+  }, []);
+
+  function handleStartPress() {
     setIsWorkoutActive(true);
     setTimeCount(0);
     setStartTimer(new Date());
@@ -85,34 +85,51 @@ export default function WorkoutMain() {
     if (chosen) {
       const workoutToUse =
         chosen.id === "new"
-          ? { id: "new", name: "Ny workout", exercises: [] as Exercise[] }
+          ? { id: "new", name: "Ny workout", exercises: selectedExercises }
           : chosen;
 
-      setOngoingWorkout({
-        ...workoutToUse,
-        exercises: workoutToUse.exercises.map((ex) => ({
-          ...ex,
-          weight: ex.weight ?? "—",
-        })),
+      const initialActiveSets: { [key: string]: { sets: string, reps: string, weight: string } } = {};
+      workoutToUse.exercises.forEach(exercise => {
+        initialActiveSets[exercise.id] = {
+          sets: exercise.sets?.toString() || "",
+          reps: exercise.reps?.toString() || "",
+          weight: exercise.weight?.toString() || ""
+        };
       });
+      setActiveExerciseSets(initialActiveSets);
+
+      setOngoingWorkout(workoutToUse);
     } else {
+      const initialActiveSets: { [key: string]: { sets: string, reps: string, weight: string } } = {};
+      selectedExercises.forEach(exercise => {
+        initialActiveSets[exercise.id] = {
+          sets: exercise.sets?.toString() || "",
+          reps: exercise.reps?.toString() || "",
+          weight: exercise.weight?.toString() || ""
+
+
+        };
+      });
+      setActiveExerciseSets(initialActiveSets);
+
       setOngoingWorkout({
         id: "custom",
-        name: "Ukjent økt",
-        exercises: [],
+        name: "Custom Workout",
+        exercises: selectedExercises,
       });
     }
   }
 
-  function handleStopWorkout() {
+  function handleStopPress() {
     if (!isWorkoutActive) return;
 
-    setoldWorkoutDuration(timeCount);
-    setoldWorkoutStart(startTimer);
-    setoldWorkoutName(ongoingWorkout ? ongoingWorkout.name : null);
+    setLastWorkoutDuration(timeCount);
+    setLastWorkoutStart(startTimer);
+    setLastWorkoutName(ongoingWorkout ? ongoingWorkout.name : null);
 
     setIsWorkoutActive(false);
     setOngoingWorkout(null);
+    setActiveExerciseSets({});
 
     const sessionForDB = {
       workoutName: ongoingWorkout ? ongoingWorkout.name : null,
@@ -126,8 +143,16 @@ export default function WorkoutMain() {
 
   useEffect(() => {
     if (isWorkoutActive) {
-      timerRef.current = setInterval(() => setTimeCount((p) => p + 1), 1000);
+      timerRef.current = setInterval(() => {
+        setTimeCount((prev) => prev + 1);
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     }
+
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -158,129 +183,236 @@ export default function WorkoutMain() {
     return `${dd}.${mm}.${year} kl ${hh}:${minStr}`;
   }
 
+  const updateExerciseSetsReps = (exerciseId: string, sets: string, reps: string, weight: string) => {
+    setExerciseSets(prev => ({
+      ...prev,
+      [exerciseId]: { sets, reps, weight }
+    }));
+  };
+
+  const updateActiveExerciseSetsReps = (exerciseId: string, sets: string, reps: string, weight: string) => {
+    setActiveExerciseSets(prev => ({
+      ...prev,
+      [exerciseId]: { sets, reps, weight }
+    }));
+  };
+
+  const toggleExerciseSelection = (exercise: Exercise) => {
+    setSelectedExercises((prev) => {
+      if (prev.some((ex) => ex.id === exercise.id)) {
+        const newExerciseSets = { ...exerciseSets };
+        delete newExerciseSets[exercise.id];
+        setExerciseSets(newExerciseSets);
+        return prev.filter((ex) => ex.id !== exercise.id);
+      } else {
+        updateExerciseSetsReps(exercise.id, "", "", "");
+        return [...prev, { ...exercise, sets: "", reps: "", weight: "" }];
+      }
+    });
+  };
+
   const handleSaveWorkout = () => {
     if (selectedExercises.length === 0) return;
+
+    const exercisesWithSetsReps = selectedExercises.map(exercise => ({
+      ...exercise,
+      sets: exerciseSets[exercise.id]?.sets || "",
+      reps: exerciseSets[exercise.id]?.reps || "",
+      weight: exerciseSets[exercise.id]?.weight || "",
+    }));
+
+    const workoutName = customWorkoutName.trim() || `Custom Workout ${userWorkouts.length + 1}`;
+
     const newWorkout = {
       id: "user_" + Date.now(),
-      name: `Custom Workout ${savedExercises.length + 1}`,
-      exercises: selectedExercises.map((ex) => ({
-        name: ex.name,
-        sets: ex.sets,
-        reps: ex.reps,
-        weight: ex.weight,
-      })),
+      name: workoutName,
+      exercises: exercisesWithSetsReps,
     };
-    setSavedExercises((prev) => [...prev, newWorkout]);
+    setUserWorkouts((prev) => [...prev, newWorkout]);
     setSelectedExercises([]);
+    setExerciseSets({});
+    setCustomWorkoutName('');
     setIsModalVisible(false);
     setSelectedWorkoutId(newWorkout.id);
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading exercises...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.body}>
-      <View style={styles.headerDate}>
-        <Text style={styles.greyDate}>
-          {new Date().toLocaleDateString("no-NO", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-          })}
-        </Text>
-      </View>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            {isWorkoutActive ? "Workout i gang" : "Workout"}
+          </Text>
+        </View>
 
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{isWorkoutActive ? "Workout i gang" : "WORKOUT"}</Text>
-        {!isWorkoutActive && (
-          <TouchableOpacity style={styles.addWorkout} onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.addWorkoutText}>+</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+        <View style={styles.bodySection}>
+          <Text style={styles.sectionTitle}>
+            {isWorkoutActive ? "Du er i en aktiv workout 💪" : "Velkommen tilbake 👋"}
+          </Text>
 
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.friendCard}>
-          <View>
+          <Text style={styles.sectionText}>
+            {isWorkoutActive
+              ? "Hold ut og fullfør økta!"
+              : "Start en ny workout eller velg en lagret treningsøkt."}
+          </Text>
+
+          {!isWorkoutActive && (
+            <>
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={() => setIsModalVisible(true)}
+              >
+                <Text style={styles.createButtonText}>+ Create Workout</Text>
+              </TouchableOpacity>
+
+              <View style={styles.pickerWrapper}>
+                <Text style={styles.pickerLabel}>Velg workout:</Text>
+                <Picker
+                  selectedValue={selectedWorkoutId}
+                  onValueChange={(value) => setSelectedWorkoutId(value)}
+                  style={styles.picker}
+                >
+                  {allWorkouts.map((w) => (
+                    <Picker.Item key={w.id} label={w.name} value={w.id} />
+                  ))}
+                </Picker>
+              </View>
+            </>
+          )}
+
+          {isWorkoutActive && (
+            <View style={styles.timerBox}>
+              <Text style={styles.timerLabel}>Tid</Text>
+              <Text style={styles.timerValue}>{formatTime(timeCount)}</Text>
+              {startTimer && (
+                <Text style={styles.timerSubText}>
+                  Startet: {formatStartTime(startTimer)}
+                </Text>
+              )}
+            </View>
+          )}
+
+          {isWorkoutActive && ongoingWorkout && (
+            <View style={styles.exerciseList}>
+              <Text style={styles.exerciseHeader}>{ongoingWorkout.name}</Text>
+
+              {ongoingWorkout.exercises.length > 0 ? (
+                ongoingWorkout.exercises.map((ex: Exercise, i: number) => {
+                  const currentSets = activeExerciseSets[ex.id]?.sets || ex.sets?.toString() || "";
+                  const currentReps = activeExerciseSets[ex.id]?.reps || ex.reps?.toString() || "";
+                  const currentWeight = activeExerciseSets[ex.id]?.weight || ex.weight?.toString() || "";
+
+                  return (
+                    <View key={ex.id} style={styles.activeExerciseContainer}>
+                      <View style={styles.exerciseRow}>
+                        <Text style={styles.exerciseName}>{ex.name}</Text>
+                        <Text style={styles.exerciseDetail}>
+                          {currentSets && currentReps ? + (currentSets) + "x" + (currentReps) : ''}
+                          {currentWeight && "-" + (currentWeight)}
+                          {ex.muscle_group && (currentSets && currentReps ? "-" + (ex.muscle_group) : ex.muscle_group)}
+                        </Text>
+                      </View>
+                      <View style={styles.activeSetsRepsContainer}>
+                        <Text style={styles.setsRepsLabel}>Sets:</Text>
+                        <TextInput
+                          style={styles.activeSetsRepsInput}
+                          value={currentSets}
+                          placeholder="0"
+                          placeholderTextColor="#666"
+                          keyboardType="numeric"
+                          onChangeText={(text) => {
+                            updateActiveExerciseSetsReps(ex.id, text, currentReps, currentWeight);
+                          }}
+                        />
+
+                        <Text style={styles.setsRepsLabel}>Reps:</Text>
+                        <TextInput
+                          style={styles.activeSetsRepsInput}
+                          value={currentReps}
+                          placeholder="0"
+                          placeholderTextColor="#666"
+                          keyboardType="numeric"
+                          onChangeText={(text) => {
+                            updateActiveExerciseSetsReps(ex.id, currentSets, text, currentWeight);
+                          }}
+                        />
+                        <Text style={styles.setsRepsLabel}>Weight:</Text>
+                        <TextInput
+                          style={styles.activeSetsRepsInput}
+                          value={currentWeight}
+                          placeholder="0"
+                          placeholderTextColor="#666"
+                          keyboardType="numeric"
+                          onChangeText={(text) => {
+                            updateActiveExerciseSetsReps(ex.id, currentSets, currentReps, text);
+                          }}
+                        />
+                      </View>
+
+                    </View>
+                  );
+                })
+              ) : (
+                <Text style={styles.exerciseEmpty}>
+                  Ingen øvelser lagt til ennå
+                </Text>
+              )}
+            </View>
+          )}
+
+          <View style={styles.card}>
             <Text style={styles.cardTitle}>
               {isWorkoutActive && ongoingWorkout ? ongoingWorkout.name : "Dagens økt"}
             </Text>
             <Text style={styles.cardText}>
-              {isWorkoutActive && ongoingWorkout ? "Aktiv plan" : "Push day · Bryst / skuldre / triceps"}
+              {isWorkoutActive && ongoingWorkout
+                ? "Aktiv plan"
+                : "Velg en workout for å komme i gang"}
             </Text>
           </View>
-        </View>
 
-        <View style={styles.main}>
-          <Text style={styles.listMain}>
-            {isWorkoutActive ? "Du er i en aktiv workout 💪" : "Velkommen tilbake 👋"}
-          </Text>
-        </View>
-
-        {isWorkoutActive && (
-          <View style={styles.timerBox}>
-            <Text style={styles.timerLabel}>Tid</Text>
-            <Text style={styles.timerValue}>{formatTime(timeCount)}</Text>
-            {startTimer && <Text style={styles.timerSubText}>Startet: {formatStartTime(startTimer)}</Text>}
-          </View>
-        )}
-
-        {isWorkoutActive && ongoingWorkout && (
-          <View style={styles.exerciseList}>
-            <Text style={styles.exerciseHeader}>{ongoingWorkout.name}</Text>
-
-            {ongoingWorkout.exercises.length === 0 ? (
-              <Text style={styles.exerciseEmpty}>Ingen øvelser valgt.</Text>
-            ) : (
-              ongoingWorkout.exercises.map((ex, i) => (
-                <View key={i} style={styles.exerciseRow}>
-                  <Text style={styles.exerciseName}>{ex.name}</Text>
-                  <Text style={styles.exerciseDetail}>
-                    {ex.sets} x {ex.reps} {ex.weight ? `(${ex.weight})` : ""}
-                  </Text>
-                </View>
-              ))
-            )}
-          </View>
-        )}
-
-        {!isWorkoutActive ? (
-          <>
-            <TouchableOpacity style={styles.startWorkout} onPress={() => setIsModalVisible(true)}>
-              <Text style={styles.mainTitle}>+ Create Workout</Text>
-            </TouchableOpacity>
-
-            <View style={styles.pickerWrapper}>
-              <Text style={styles.pickerLabel}>Velg workout:</Text>
-              <Picker
-                selectedValue={selectedWorkoutId}
-                onValueChange={(value: string) => setSelectedWorkoutId(value)}
-                style={styles.picker}
-              >
-                {allWorkouts.map((w) => (
-                  <Picker.Item key={w.id} label={w.name} value={w.id} />
-                ))}
-              </Picker>
-            </View>
-
-            <Pressable onPress={handleStartWorkout} style={styles.buttonStart}>
+          {!isWorkoutActive && (
+            <Pressable style={styles.buttonStart} onPress={handleStartPress}>
               <Text style={styles.buttonText}>Start workout</Text>
             </Pressable>
-          </>
-        ) : (
-          <Pressable onPress={handleStopWorkout} style={styles.buttonStop}>
-            <Text style={styles.buttonText}>Stopp workout</Text>
-          </Pressable>
-        )}
+          )}
+          {isWorkoutActive && (
+            <Pressable style={styles.buttonStop} onPress={handleStopPress}>
+              <Text style={styles.buttonText}>Stopp workout</Text>
+            </Pressable>
+          )}
 
-        {!isWorkoutActive && oldWorkoutDuration > 0 && (
-          <View style={styles.prevWorkoutBox}>
-            <Text style={styles.prevWorkoutTitle}>Forrige økt</Text>
-            {oldWorkoutName && <Text style={styles.prevWorkoutLine}>Økt: {oldWorkoutName}</Text>}
-            <Text style={styles.prevWorkoutLine}>Varighet: {formatTime(oldWorkoutDuration)}</Text>
-            {oldWorkoutStart && (
-              <Text style={styles.prevWorkoutLine}>Startet: {formatStartTime(oldWorkoutStart)}</Text>
-            )}
-          </View>
-        )}
+          {!isWorkoutActive && lastWorkoutDuration > 0 && (
+            <View style={styles.prevWorkoutBox}>
+              <Text style={styles.prevWorkoutTitle}>Forrige økt</Text>
+              {lastWorkoutName && (
+                <Text style={styles.prevWorkoutLine}>Økt: {lastWorkoutName}</Text>
+              )}
+              <Text style={styles.prevWorkoutLine}>
+                Varighet: {formatTime(lastWorkoutDuration)}
+              </Text>
+              {lastWorkoutStart && (
+                <Text style={styles.prevWorkoutLine}>
+                  Startet: {formatStartTime(lastWorkoutStart)}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
       </ScrollView>
 
       <Modal
@@ -288,41 +420,124 @@ export default function WorkoutMain() {
         onRequestClose={() => setIsModalVisible(false)}
         animationType="slide"
       >
-        <SafeAreaView style={styles.modalBody}>
-          <View style={styles.modalMain}>
-            <Button title="Close" color="#2f6cf9" onPress={() => setIsModalVisible(false)} />
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#111" }}>
+          <View style={{ padding: 16 }}>
+            <Button
+              title="Close"
+              color="#2f6cf9"
+              onPress={() => setIsModalVisible(false)}
+            />
           </View>
 
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Workout Exercises:</Text>
-            <Text style={styles.modalDescription}>Choose an exercise:</Text>
-          </View>
+          <ScrollView contentContainerStyle={{ padding: 16 }}>
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 20,
+                fontWeight: "700",
+                marginBottom: 12,
+              }}
+            >
+              Choose Exercises
+            </Text>
 
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            {workouts.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  styles.modalExercise,
-                  selectedExercises.some((ex) => ex.id === item.id) && styles.modalExerciseActive,
-                ]}
-                onPress={() => {
-                  setSelectedExercises((prev) =>
-                    prev.some((ex) => ex.id === item.id)
-                      ? prev.filter((ex) => ex.id !== item.id)
-                      : [...prev, item]
-                  );
-                }}
-              >
-                <Text style={styles.modalExerciseText}>{item.name}</Text>
-                <Text style={styles.modalExerciseText}>
-                  {item.sets}x{item.reps} ({item.weight})
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {exercises.length > 0 ? (
+              exercises.map((item: Exercise) => {
+                const isSelected = selectedExercises.some((ex) => ex.id === item.id);
+                const currentSets = exerciseSets[item.id]?.sets || "";
+                const currentReps = exerciseSets[item.id]?.reps || "";
+                const currentWeight = exerciseSets[item.id]?.weight || "";
 
-            <TouchableOpacity style={styles.saveWorkoutButton} onPress={handleSaveWorkout}>
-              <Text style={styles.saveWorkoutText}>Save Workout</Text>
+                return (
+                  <View key={item.id} style={[
+                    styles.modalExerciseContainer,
+                    isSelected && { backgroundColor: "#2f6cf9" },
+                  ]}>
+                    <TouchableOpacity
+                      style={styles.modalExercise}
+                      onPress={() => toggleExerciseSelection(item)}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.modalExerciseText}>{item.name}</Text>
+                        <Text style={styles.modalExerciseSubtext}>
+                          {item.muscle_group || "Full body"}
+                          {(currentSets || currentReps) && "-" + (currentSets || "0") + "x" + (currentReps || "0")}
+                          {currentWeight && "-" + (currentWeight)}
+                          {item.weight && "-" + (item.weight)}
+                        </Text>
+                      </View>
+                      <Text style={styles.modalExerciseText}>
+                        {isSelected ? '' : ''}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {isSelected && (
+                      <View style={styles.setsRepsContainer}>
+                        <Text style={styles.setsRepsLabel}>Sets:</Text>
+                        <TextInput
+                          style={styles.setsRepsInput}
+                          value={currentSets}
+                          placeholder="0"
+                          placeholderTextColor="#666"
+                          keyboardType="numeric"
+                          onChangeText={(text) => {
+                            updateExerciseSetsReps(item.id, text, currentReps, currentWeight);
+                          }}
+                        />
+
+                        <Text style={styles.setsRepsLabel}>Reps:</Text>
+                        <TextInput
+                          style={styles.setsRepsInput}
+                          value={currentReps}
+                          placeholder="0"
+                          placeholderTextColor="#666"
+                          keyboardType="numeric"
+                          onChangeText={(text) => {
+                            updateExerciseSetsReps(item.id, currentSets, text, currentWeight);
+                          }}
+                        />
+
+                        <Text style={styles.setsRepsLabel}>Weight:</Text>
+                        <TextInput
+                          style={styles.setsRepsInput}
+                          value={currentWeight}
+                          placeholder="0"
+                          placeholderTextColor="#666"
+                          keyboardType="numeric"
+                          onChangeText={(text) => {
+                            updateExerciseSetsReps(item.id, currentSets, currentReps, text);
+                          }}
+                        />
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={{ color: "#fff", textAlign: "center", marginTop: 20 }}>
+                No exercises found in Firestore
+              </Text>
+            )}
+
+            <TextInput
+              style={styles.workoutNameInput}
+              placeholder="Workout name"
+              placeholderTextColor="#999"
+              value={customWorkoutName}
+              onChangeText={setCustomWorkoutName}
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.saveWorkoutButton,
+                selectedExercises.length === 0 && { backgroundColor: "#666" }
+              ]}
+              onPress={handleSaveWorkout}
+              disabled={selectedExercises.length === 0}
+            >
+              <Text style={styles.saveWorkoutText}>
+                Save Workout {selectedExercises.length > 0 && + ((selectedExercises.length))}
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
@@ -332,52 +547,91 @@ export default function WorkoutMain() {
 }
 
 const styles = StyleSheet.create({
-  body: { 
-    flex: 1, 
-    backgroundColor: COLOR_BACK
-   },
-  scrollContainer: { 
-    flex: 1 
+  screen: {
+    flex: 1
   },
-
-  headerDate: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    marginBottom: 5 
+  scrollArea: {
+    flex: 1
   },
-  greyDate: { 
-    color: "#888", 
-    fontSize: 10 
+  content: {
+    paddingHorizontal: 16,
+    paddingVertical: 16
   },
-
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: PADDING1,
+    marginBottom: 16,
   },
-  headerTitle: { 
-    color: "#111", 
-    fontSize: 28, 
-    fontWeight: "700", 
-    textAlign: "center" 
+  title: {
+    color: "#111",
+    fontSize: 28,
+    fontWeight: "700",
+    textAlign: "center"
   },
-
-  addWorkout: { 
-    position: "absolute", 
-    right: 10, 
-    bottom: "15%" 
-  },
-  addWorkoutText: { 
-    color: "#2f6cf9", 
-    fontSize: 40, 
-    textAlign: "center" 
-  },
-
-  friendCard: {
+  bodySection: {
+    marginBottom: 16,
     backgroundColor: "#fff",
     borderRadius: 12,
-    padding: PADDING1,
+    borderWidth: 1,
+    borderColor: "#d4d4d4",
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111",
+    marginBottom: 8
+  },
+  sectionText: {
+    fontSize: 14,
+    color: "#444",
+    marginBottom: 12
+  },
+  pickerWrapper: {
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#d4d4d4",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#111",
+    padding: 12
+  },
+  picker: {
+    width: "100%"
+  },
+  timerBox: {
+    marginBottom: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#d4d4d4",
+    borderRadius: 8,
+    paddingVertical: 12,
+    backgroundColor: "#fafafa",
+  },
+  timerLabel: {
+    fontSize: 14,
+    color: "#444",
+    marginBottom: 4
+  },
+  timerValue: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#111"
+  },
+  timerSubText: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#555"
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
     borderColor: "#d4d4d4",
     marginBottom: 16,
@@ -392,98 +646,6 @@ const styles = StyleSheet.create({
     fontSize: 14, 
     color: "#555" 
   },
-
-  main: { 
-    justifyContent: "center", 
-    alignItems: "center", 
-    paddingBottom: 12 
-  },
-  listMain: { 
-    color: "#444", 
-    fontSize: 14, 
-    marginBottom: 6 
-  },
-
-  timerBox: {
-    marginBottom: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#d4d4d4",
-    borderRadius: 8,
-    paddingVertical: 12,
-    backgroundColor: "#fafafa",
-  },
-  timerLabel: { 
-    fontSize: 14, 
-    color: "#444", 
-    marginBottom: 4 
-  },
-  timerValue: { 
-    fontSize: 32, 
-    fontWeight: "700", 
-    color: "#111" 
-  },
-  timerSubText: { 
-    marginTop: 4, 
-    fontSize: 12, 
-    color: "#555" 
-  },
-
-  exerciseList: {
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#d4d4d4",
-    borderRadius: 8,
-    backgroundColor: "#fff",
-  },
-  exerciseHeader: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#111",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-  },
-  exerciseEmpty: { 
-    fontSize: 14, 
-    color: "#777", 
-    padding: 12 
-  },
-  exerciseRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-  },
-  exerciseName: { 
-    fontSize: 14, 
-    fontWeight: "500", 
-    color: "#111" 
-  },
-  exerciseDetail: { 
-    fontSize: 14, 
-    color: "#444" 
-  },
-
-  pickerWrapper: {
-    marginTop: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#d4d4d4",
-    borderRadius: 8,
-    backgroundColor: "#f9f9f9",
-  },
-  pickerLabel: { 
-    fontSize: 14, 
-    fontWeight: "500", 
-    color: "#111", 
-    padding: 12 
-  },
-  picker: { 
-    width: "100%" 
-  },
-
   buttonStart: {
     backgroundColor: "#2f6cf9",
     borderRadius: 8,
@@ -501,7 +663,6 @@ const styles = StyleSheet.create({
     fontWeight: "600", 
     fontSize: 16 
   },
-
   prevWorkoutBox: {
     marginTop: 16,
     backgroundColor: "#fff",
@@ -519,54 +680,109 @@ const styles = StyleSheet.create({
     fontSize: 14, 
     color: "#444" 
   },
-
-  modalBody: { 
-    flex: 1, 
-    backgroundColor: "#111" 
+  exerciseList: {
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#d4d4d4",
+    borderRadius: 8,
+    backgroundColor: "#fff",
   },
-  modalMain: { 
-    padding: 16 
+  exerciseHeader: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e5e5",
   },
-  modalHeader: { 
-    paddingHorizontal: 16, 
-    marginBottom: 12, 
-    alignItems: "flex-start" 
-  },
-  modalTitle: { 
-    color: "#fff", 
-    fontSize: 20, 
-    fontWeight: "700", 
-    marginBottom: 6 
-  },
-  modalDescription: { 
+  exerciseEmpty: {
     fontSize: 14, 
-    color: "#bbb", 
-    textAlign: "left" 
+    color: "#777", 
+    padding: 12
   },
-
-  modalContent: { 
-    padding: 16 
+  activeExerciseContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e5e5",
   },
-
-  modalExercise: {
+  exerciseRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    padding: 12,
+  },
+  exerciseName: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#111"
+  },
+  exerciseDetail: {
+    fontSize: 14,
+    color: "#444"
+  },
+  activeSetsRepsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f9f9f9',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+  },
+  activeSetsRepsInput: {
+    backgroundColor: '#fff',
+    color: '#111',
+    padding: 8,
+    borderRadius: 4,
+    width: 50,
+    textAlign: 'center',
+    borderWidth: 1,
+    borderColor: '#d4d4d4',
+  },
+  modalExerciseContainer: {
     borderBottomWidth: 1,
     borderBottomColor: "#333",
     backgroundColor: "#222",
     borderRadius: 8,
-    marginBottom: 6,
+    marginBottom: 8,
+    overflow: 'hidden',
   },
-  modalExerciseActive: { 
-    backgroundColor: "#2f6cf9" 
+  modalExercise: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
   },
-  modalExerciseText: { 
-    color: "#fff", 
-    fontSize: 14 
+  modalExerciseText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "500"
   },
-
+  modalExerciseSubtext: {
+    color: "#ccc",
+    fontSize: 12,
+    marginTop: 2
+  },
+  setsRepsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#333',
+    borderTopWidth: 1,
+    borderTopColor: '#444',
+  },
+  setsRepsLabel: {
+    color: '#fff',
+    fontSize: 14,
+    marginRight: 8,
+    marginLeft: 12,
+  },
+  setsRepsInput: {
+    backgroundColor: '#111',
+    color: '#fff',
+    padding: 8,
+    borderRadius: 4,
+    width: 50,
+    textAlign: 'center',
+  },
   saveWorkoutButton: {
     marginTop: 20,
     backgroundColor: "#2f6cf9",
@@ -574,25 +790,38 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  saveWorkoutText: { 
-    color: "#fff",
-     fontWeight: "700", 
-     fontSize: 16 
-    },
-
-  startWorkout: { 
-    justifyContent: "center", 
-    alignSelf: "center", 
-    marginTop: 12 
-  },
-  mainTitle: {
-    backgroundColor: "#2770ddff",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignSelf: "center",
+  saveWorkoutText: {
     color: "#fff",
     fontWeight: "700",
+    fontSize: 16
+  },
+  createButton: {
+    backgroundColor: "#2f6cf9",
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  createButtonText: {
+    color: "#fff",
+    fontSize: 16, fontWeight: "600"
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    color: "#111",
+    fontSize: 16,
+  },
+  workoutNameInput: {
+    backgroundColor: '#222',
+    color: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#444',
   },
 });

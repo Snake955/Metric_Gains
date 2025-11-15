@@ -1,10 +1,10 @@
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
 import { Stack } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import * as Progress from "react-native-progress";
-import { ThemedText } from "../../components/themed-text";
-import { ThemedView } from "../../components/themed-view";
 
 export default function StatsScreen() {
   return (

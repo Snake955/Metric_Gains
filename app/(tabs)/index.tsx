@@ -1,13 +1,29 @@
-import React from "react";
+import SpotifyLogo from "@/assets/images/spotify-blue.png";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import React, { useState, useEffect } from "react";
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import * as Progress from "react-native-progress";
-import SpotifyLogo from "../../assets/images/spotify-blue.png";
-import { ThemedText } from "../../components/themed-text";
-import { ThemedView } from "../../components/themed-view";
-import { IconSymbol } from "../../components/ui/icon-symbol";
 
+import { onAuthStateChanged, User } from "firebase/auth";
+import { FIREBASE_AUTH } from "../../FirebaseConfig";
 
 export default function HomeScreen() {
+const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (user: User | null) => {
+      if (user) {
+        let name = user.displayName ?? null; //get displayname from metric gain firebase
+        setDisplayName(name ?? "User"); //display name user if no name found
+      } else {
+        setDisplayName(null); //No user is logged inn also displays no name then
+      }
+    });
+    return unsubscribe; //removes text if user logs out and into new user 
+  }, []);
+
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -21,7 +37,9 @@ export default function HomeScreen() {
         <IconSymbol name="bell.fill" size={24} color="#3f3f3fff" />
       </View>
       {/* This part will be changed later so that instead of Erik it will take the assigned user's name */}
-      <ThemedText type="default">Good Morning, Erik!</ThemedText>
+      <ThemedText type="default">
+        Good Morning{displayName ? `, ${displayName}!` : "!"}
+      </ThemedText>
 
       <ThemedText style={styles.topbar_index}>
         You are on a <ThemedText type="title" style={styles.blue}>2x week</ThemedText> streak!
