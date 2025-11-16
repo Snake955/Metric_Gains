@@ -12,6 +12,7 @@ type Exercise = {
   sets?: number | string;
   reps?: number | string;
   weight?: string;
+  complete?: boolean
 };
 
 type Workout = {
@@ -50,7 +51,7 @@ export default function WorkoutMain() {
     allWorkouts.length > 0 ? String(allWorkouts[0].id) : ""
   );
   const [ongoingWorkout, setOngoingWorkout] = useState<Workout | null>(null);
-  const [activeExerciseSets, setActiveExerciseSets] = useState<{ [key: string]: { sets: string, reps: string, weight: string } }>({});
+  const [activeExerciseSets, setActiveExerciseSets] = useState<{ [key: string]: { sets: number, reps: string, weight: string, completed: boolean }[] }>({});
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
@@ -88,32 +89,57 @@ export default function WorkoutMain() {
     const chosen = allWorkouts.find((w) => w.id === selectedWorkoutId);
 
     if (chosen) {
-      const workoutToUse =
-        chosen.id === "new"
-          ? { id: "new", name: "Ny workout", exercises: selectedExercises }
-          : chosen;
+      let workoutToUse;
 
-      const initialActiveSets: { [key: string]: { sets: string, reps: string, weight: string } } = {};
+      if (chosen.id === "new") {
+        const exercisesWithSetsReps = selectedExercises.map(exercise => ({
+          ...exercise,
+          sets: exerciseSets[exercise.id]?.sets || "",
+          reps: exerciseSets[exercise.id]?.reps || "",
+          weight: exerciseSets[exercise.id]?.weight || "",
+        }));
+        workoutToUse = { id: "new", name: "Ny workout", exercises: exercisesWithSetsReps };
+      } else {
+        workoutToUse = chosen;
+      }
+
+      const initialActiveSets: { [key: string]: { sets: number, reps: string, weight: string, completed: boolean, }[] } = {};
       workoutToUse.exercises.forEach(exercise => {
-        initialActiveSets[exercise.id] = {
-          sets: exercise.sets?.toString() || "",
-          reps: exercise.reps?.toString() || "",
-          weight: exercise.weight?.toString() || ""
-        };
+        const inputSets = Number(exercise.sets) || 0;
+        const inputReps = exercise.reps?.toString() || "";
+        const inputWeight = exercise.weight?.toString() || "";
+
+        const initialSets = [];
+        for (let i = 1; i <= inputSets; i++) {
+          initialSets.push({
+            sets: i,
+            reps: inputReps,
+            weight: inputWeight,
+            completed: false
+          });
+        }
+        initialActiveSets[exercise.id] = initialSets;
       });
       setActiveExerciseSets(initialActiveSets);
 
       setOngoingWorkout(workoutToUse);
     } else {
-      const initialActiveSets: { [key: string]: { sets: string, reps: string, weight: string } } = {};
+      const initialActiveSets: { [key: string]: { sets: number, reps: string, weight: string, completed: boolean, }[] } = {};
       selectedExercises.forEach(exercise => {
-        initialActiveSets[exercise.id] = {
-          sets: exercise.sets?.toString() || "",
-          reps: exercise.reps?.toString() || "",
-          weight: exercise.weight?.toString() || ""
+        const inputSets = Number(exerciseSets[exercise.id]?.sets) || 0;
+        const inputReps = exerciseSets[exercise.id]?.reps || "";
+        const inputWeight = exerciseSets[exercise.id]?.weight || "";
 
-
-        };
+        const initialSets = [];
+        for (let i = 1; i <= inputSets; i++) {
+          initialSets.push({
+            sets: i,
+            reps: inputReps,
+            weight: inputWeight,
+            completed: false
+          });
+        }
+        initialActiveSets[exercise.id] = initialSets;
       });
       setActiveExerciseSets(initialActiveSets);
 
@@ -127,7 +153,6 @@ export default function WorkoutMain() {
 
   function handleStopPress() {
     if (!isWorkoutActive) return;
-
     setLastWorkoutDuration(timeCount);
     setLastWorkoutStart(startTimer);
     setLastWorkoutName(ongoingWorkout ? ongoingWorkout.name : null);
@@ -135,7 +160,7 @@ export default function WorkoutMain() {
     setIsWorkoutActive(false);
     setOngoingWorkout(null);
     setActiveExerciseSets({});
-
+    // Add sets, reps and weight to send to the database next
     const sessionForDB = {
       workoutName: ongoingWorkout ? ongoingWorkout.name : null,
       startedAt: startTimer ? startTimer.toISOString() : null,
@@ -195,13 +220,6 @@ export default function WorkoutMain() {
     }));
   };
 
-  const updateActiveExerciseSetsReps = (exerciseId: string, sets: string, reps: string, weight: string) => {
-    setActiveExerciseSets(prev => ({
-      ...prev,
-      [exerciseId]: { sets, reps, weight }
-    }));
-  };
-
   const toggleExerciseSelection = (exercise: Exercise) => {
     setSelectedExercises((prev) => {
       if (prev.some((ex) => ex.id === exercise.id)) {
@@ -240,6 +258,27 @@ export default function WorkoutMain() {
     setIsModalVisible(false);
     setSelectedWorkoutId(newWorkout.id);
   };
+
+  const addNewSet = (exerciseId: string) => {
+    setActiveExerciseSets(prev => {
+      const currentSets = prev[exerciseId] || []
+      const newSetNumber = currentSets.length + 1;
+
+      return {
+        ...prev,
+        [exerciseId]: [
+          ...currentSets,
+          {
+            sets: newSetNumber,
+            reps: "",
+            weight: "",
+            completed: false
+          }
+        ]
+      };
+    });
+  };
+
 
   if (loading) {
     return (
@@ -314,60 +353,91 @@ export default function WorkoutMain() {
           {isWorkoutActive && ongoingWorkout && (
             <View style={styles.exerciseList}>
               <Text style={styles.exerciseHeader}>{ongoingWorkout.name}</Text>
-
               {ongoingWorkout.exercises.length > 0 ? (
                 ongoingWorkout.exercises.map((ex: Exercise, i: number) => {
-                  const currentSets = activeExerciseSets[ex.id]?.sets || ex.sets?.toString() || "";
-                  const currentReps = activeExerciseSets[ex.id]?.reps || ex.reps?.toString() || "";
-                  const currentWeight = activeExerciseSets[ex.id]?.weight || ex.weight?.toString() || "";
+                  const currentSets = activeExerciseSets[ex.id] || [];
 
                   return (
                     <View key={ex.id} style={styles.activeExerciseContainer}>
                       <View style={styles.exerciseRow}>
                         <Text style={styles.exerciseName}>{ex.name}</Text>
                         <Text style={styles.exerciseDetail}>
-                          {currentSets && currentReps ? + (currentSets) + "x" + (currentReps) : ''}
-                          {currentWeight && "-" + (currentWeight)}
-                          {ex.muscle_group && (currentSets && currentReps ? "-" + (ex.muscle_group) : ex.muscle_group)}
+                          {ex.muscle_group && ex.muscle_group}
                         </Text>
                       </View>
-                      <View style={styles.activeSetsRepsContainer}>
-                        <Text style={styles.setsRepsLabel}>Sets:</Text>
-                        <TextInput
-                          style={styles.activeSetsRepsInput}
-                          value={currentSets}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateActiveExerciseSetsReps(ex.id, text, currentReps, currentWeight);
-                          }}
-                        />
+                      <View style={styles.setsRepsLabel}>
+                        <View style={styles.setsHeader}>
+                          <Text style={styles.setsRepsLabel}>Set</Text>
+                          <Text style={styles.setsRepsLabel}>Reps</Text>
+                          <Text style={styles.setsRepsLabel}>Weight</Text>
+                          <Text style={styles.setsRepsLabel}>Done</Text>
+                        </View>
 
-                        <Text style={styles.setsRepsLabel}>Reps:</Text>
-                        <TextInput
-                          style={styles.activeSetsRepsInput}
-                          value={currentReps}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateActiveExerciseSetsReps(ex.id, currentSets, text, currentWeight);
-                          }}
-                        />
-                        <Text style={styles.setsRepsLabel}>Weight:</Text>
-                        <TextInput
-                          style={styles.activeSetsRepsInput}
-                          value={currentWeight}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateActiveExerciseSetsReps(ex.id, currentSets, currentReps, text);
-                          }}
-                        />
+                        {currentSets.map((set, index) => (
+                          <View key={set.sets} style={styles.setRow}>
+                            <Text style={styles.setNumber}>{set.sets}</Text>
+
+                            <TextInput
+                              style={styles.setInput}
+                              value={set.reps}
+                              placeholder="-"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                const updatedSets = [...currentSets];
+                                updatedSets[index] = { ...set, reps: text };
+                                setActiveExerciseSets(prev => ({
+                                  ...prev,
+                                  [ex.id]: updatedSets
+                                }));
+                              }}
+                            />
+
+                            <TextInput
+                              style={styles.setInput}
+                              value={set.weight}
+                              placeholder="-"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                const updatedSets = [...currentSets];
+                                updatedSets[index] = { ...set, weight: text };
+                                setActiveExerciseSets(prev => ({
+                                  ...prev,
+                                  [ex.id]: updatedSets
+                                }));
+                              }}
+                            />
+
+                            <TouchableOpacity
+                              style={[
+                                styles.checkbox,
+                                set.completed && styles.checkboxCompleted
+                              ]}
+                              onPress={() => {
+                                const updatedSets = [...currentSets];
+                                updatedSets[index] = {
+                                  ...set,
+                                  completed: !set.completed
+                                };
+                                setActiveExerciseSets(prev => ({
+                                  ...prev,
+                                  [ex.id]: updatedSets
+                                }));
+                              }}
+                            >
+                              {set.completed && <Text style={styles.checkmark}>✓</Text>}
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+
+                        <TouchableOpacity
+                          style={styles.addSetButton}
+                          onPress={() => addNewSet(ex.id)}
+                        >
+                          <Text style={styles.addSetButtonText}>+ Add Set</Text>
+                        </TouchableOpacity>
                       </View>
-
                     </View>
                   );
                 })
@@ -723,31 +793,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#444"
   },
-  activeSetsRepsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f9f9f9',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
-  },
-  activeSetsRepsInput: {
-    backgroundColor: '#fff',
-    color: '#111',
-    padding: 8,
-    borderRadius: 4,
-    width: 50,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#d4d4d4',
-  },
   modalExerciseContainer: {
     borderBottomWidth: 1,
     borderBottomColor: "#333",
     backgroundColor: "#222",
     borderRadius: 8,
     marginBottom: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   modalExercise: {
     flexDirection: "row",
@@ -767,26 +819,26 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   setsRepsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
-    backgroundColor: '#333',
+    backgroundColor: "#333",
     borderTopWidth: 1,
-    borderTopColor: '#444',
+    borderTopColor: "#444",
   },
   setsRepsLabel: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
     marginRight: 8,
     marginLeft: 12,
   },
   setsRepsInput: {
-    backgroundColor: '#111',
-    color: '#fff',
+    backgroundColor: "#111",
+    color: "#fff",
     padding: 8,
     borderRadius: 4,
     width: 50,
-    textAlign: 'center',
+    textAlign: "center",
   },
   saveWorkoutButton: {
     marginTop: 20,
@@ -809,7 +861,8 @@ const styles = StyleSheet.create({
   },
   createButtonText: {
     color: "#fff",
-    fontSize: 16, fontWeight: "600"
+    fontSize: 16,
+    fontWeight: "600"
   },
   loadingContainer: {
     flex: 1,
@@ -821,12 +874,82 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   workoutNameInput: {
-    backgroundColor: '#222',
-    color: '#fff',
+    backgroundColor: "#222",
+    color: "#fff",
     padding: 12,
     borderRadius: 8,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: "#444",
+  },
+  setsContainer: {
+    padding: 12,
+    backgroundColor: "#f9f9f9",
+  },
+  setsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 8,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e5e5",
+    paddingBottom: 4,
+  },
+  setRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  setNumber: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#111",
+    width: 60,
+    textAlign: "center",
+  },
+  setInput: {
+    backgroundColor: "#fff",
+    color: "#111",
+    padding: 8,
+    borderRadius: 4,
+    width: 60,
+    textAlign: "center",
+    borderWidth: 1,
+    borderColor: "#d4d4d4",
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: "#d4d4d4",
+    borderRadius: 4,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  checkboxCompleted: {
+    backgroundColor: "#2f6cf9",
+    borderColor: "#2f6cf9",
+  },
+  checkmark: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  addSetButton: {
+    backgroundColor: "#2f6cf9",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  addSetButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
   },
 });
