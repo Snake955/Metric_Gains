@@ -16,7 +16,7 @@ export default function Login() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(FIREBASE_AUTH, (user) => {
-      if (user) router.replace("../(tabs)/index");
+      if (user) router.replace("../(tabs)");
     });
     return unsub;
   }, []);
@@ -65,7 +65,7 @@ export default function Login() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={{flexGrow: 1, paddingBottom: 40}}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -74,10 +74,10 @@ export default function Login() {
               <AntDesign name="left" size={22} />
             </TouchableOpacity>
             <Text style={styles.title}>
-              <Text style={{fontWeight: "700"}}>Logg inn</Text>
+              <Text style={{ fontWeight: "700" }}>Logg inn</Text>
               til brukeren din
             </Text>
-            <View style={{width: 22}} />
+            <View style={{ width: 22 }} />
           </View>
 
           <View style={styles.content}>
@@ -104,7 +104,7 @@ export default function Login() {
                   style={styles.eyeToggle}
                   hitSlop={8}
                 >
-                  <AntDesign name={showPass ? "eye" : "eyeo"} size={18} color="#111"/>
+                  <AntDesign name={showPass ? "eye" : "eyeo"} size={18} color="#111" />
                 </TouchableOpacity>
               </View>
 
@@ -114,7 +114,7 @@ export default function Login() {
             </View>
 
             <TouchableOpacity
-              style={[styles.primaryBtn, loading && {opacity: 0.7}]}
+              style={[styles.primaryBtn, loading && { opacity: 0.7 }]}
               onPress={handleLogin}
               activeOpacity={0.85}
               disabled={loading}
@@ -159,7 +159,7 @@ function LabeledInput(props: {
   } = props;
   return (
     <View style={styles.inputRow}>
-      <AntDesign name={icon} size={18} style={styles.inputIcon}/>
+      <AntDesign name={icon} size={18} style={styles.inputIcon} />
       <TextInput
         style={styles.input}
         placeholder={placeholder}
@@ -175,7 +175,7 @@ function LabeledInput(props: {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: "#fff"},
+  safe: { flex: 1, backgroundColor: "#fff" },
 
   headerRow: {
     flexDirection: "row",
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     marginBottom: 8,
   },
-  title: {fontSize: 22, flex: 1, textAlign: "left", marginLeft: 6},
+  title: { fontSize: 22, flex: 1, textAlign: "left", marginLeft: 6 },
 
   content: {
     flexGrow: 1,
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  form: {marginTop: 28, gap: 18},
+  form: { marginTop: 28, gap: 18 },
 
   inputRow: {
     width: "100%",
@@ -207,13 +207,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     minHeight: 54,
   },
-  inputIcon: {marginRight: 10, color: "#111"},
-  input: {flex: 1, fontSize: 16, color: "#111"},
+  inputIcon: { marginRight: 10, color: "#111" },
+  input: { flex: 1, fontSize: 16, color: "#111" },
 
-  eyeToggle: {position: "absolute", right: 14, top: 16},
+  eyeToggle: { position: "absolute", right: 14, top: 16 },
 
-  forgotWrap: {paddingVertical: 6, alignSelf: "flex-end"},
-  forgotText: {color: "#111"},
+  forgotWrap: { paddingVertical: 6, alignSelf: "flex-end" },
+  forgotText: { color: "#111" },
 
   primaryBtn: {
     backgroundColor: "#111",
@@ -225,13 +225,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 22,
   },
-  primaryText: {color: "#fff", fontWeight: "600", fontSize: 18},
+  primaryText: { color: "#fff", fontWeight: "600", fontSize: 18 },
 
   bottomSection: {
     alignItems: "center",
     justifyContent: "center",
     marginTop: 40,
   },
-  bottomTitle: {fontSize: 16, fontWeight: "700", marginBottom: 4},
-  bottomLink: {fontSize: 14, color: "#111"},
+  bottomTitle: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
+  bottomLink: { fontSize: 14, color: "#111" },
 });
