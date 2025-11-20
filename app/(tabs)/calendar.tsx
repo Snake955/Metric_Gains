@@ -1,12 +1,24 @@
 import UpperBody from "@/assets/images/UpperbodyIcon.png";
 import { Colors } from '@/constants/theme';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { Picker } from "@react-native-picker/picker";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CalendarProvider, WeekCalendar } from 'react-native-calendars';
 import { SafeAreaView } from "react-native-safe-area-context";
+
+type Workout = {
+  id: string;
+  name: string;
+  exercises: any[];
+  userId?: string;
+  createdAt?: string;
+};
 
 export default function CalendarScreen() {
   const colorScheme = useColorScheme();
@@ -34,6 +46,55 @@ export default function CalendarScreen() {
   function monthLabel(year: number, month: number) {
     return new Date(year, month - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
   }
+
+  const [user, setUser] = useState<User | null>(null);
+  const [userWorkouts, setUserWorkouts] = useState<Workout[]>([]);
+
+  const DEFAULT_WORKOUT = [
+    {
+      id: "jog",
+      name: "Joggetur",
+      exercises: [],
+    }
+  ];
+
+  const allWorkouts = [...DEFAULT_WORKOUT, ...userWorkouts];
+
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string>(
+    allWorkouts.length > 0 ? String(allWorkouts[0].id) : ""
+  );
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      setUser(user);
+      if (user) {
+        loadUserWorkouts(user.uid);
+      } else {
+        setUserWorkouts([]);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const loadUserWorkouts = async (userId: string) => {
+    try {
+      const workoutsQuery = query(
+        collection(FIRESTORE_DB, 'user_workouts'),
+        where('userId', '==', userId)
+      );
+
+      const querySnapshot = await getDocs(workoutsQuery);
+      const workouts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Workout[];
+
+      setUserWorkouts(workouts);
+    } catch (error) {
+      console.error("Error loading user workouts:", error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -183,9 +244,20 @@ export default function CalendarScreen() {
           {/* body */}
           <View style={{ gap: 12 }}>
             <Text style={{ color: '#666' }}>
-              Her kan du legge inn en rask økt for {selected}.
+              Plan for {selected}.
             </Text>
-            {/* legg til input ting under her */}
+            <View style={styles.pickerWrapper}>
+              <Text style={styles.pickerLabel}>Velg workout:</Text>
+              <Picker
+                selectedValue={selectedWorkoutId}
+                onValueChange={(value) => setSelectedWorkoutId(String(value))}
+                style={styles.picker}
+              >
+                {allWorkouts.map((w) => (
+                  <Picker.Item key={w.id} label={w.name} value={w.id} />
+                ))}
+              </Picker>
+            </View>
           </View>
         </BottomSheetView>
       </BottomSheetModal>
@@ -358,5 +430,24 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: '#e6e6e6',
     marginBottom: 12,
+  },
+
+  pickerWrapper: {
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#d4d4d4",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#111",
+    padding: 12
+  },
+
+  picker: {
+    width: "100%"
   }
 });
