@@ -4,6 +4,7 @@ import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from "@react-native-picker/picker";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -25,27 +26,21 @@ export default function CalendarScreen() {
   const tint = Colors[colorScheme ?? 'light'].tint;
   const today = new Date().toISOString().slice(0, 10);
   const [selected, setSelected] = useState<string>(today);
+  const [plannedDate, setPlannedDate] = useState<Date>(new Date());
 
-  const sheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['75%'], []);
-
-  const openSheet = useCallback(() => sheetRef.current?.present(), []);
-  const closeSheet = useCallback(() => sheetRef.current?.dismiss(), []);
-
-  const onAdd = useCallback(() => {
-    // legg til logikk for å lagre/legge til økt her
-
-    closeSheet(); // lukk etter “legg til”
-  }, [closeSheet]);
-
-  const [visibleMonth, setVisibleMonth] = useState<{year: number; month: number}>({
-    year: new Date().getFullYear(),
-    month: new Date().getMonth() + 1,
+  const [startTime, setStartTime] = useState<Date>(() => {
+  const d = new Date();
+    d.setHours(10, 0, 0, 0);    // 10:00
+    return d;
   });
 
-  function monthLabel(year: number, month: number) {
-    return new Date(year, month - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
-  }
+  const [endTime, setEndTime] = useState<Date>(() => {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);    // 12:00
+    return d;
+  });
+
+
 
   const [user, setUser] = useState<User | null>(null);
   const [userWorkouts, setUserWorkouts] = useState<Workout[]>([]);
@@ -63,6 +58,47 @@ export default function CalendarScreen() {
   const [selectedWorkoutId, setSelectedWorkoutId] = useState<string>(
     allWorkouts.length > 0 ? String(allWorkouts[0].id) : ""
   );
+
+  const sheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ['75%'], []);
+
+  const openSheet = useCallback(() => {
+    setPlannedDate(new Date(selected));
+    sheetRef.current?.present();
+  }, [selected]);
+  const closeSheet = useCallback(() => sheetRef.current?.dismiss(), []);
+
+  const onAdd = useCallback(() => {
+    function formatTime(date: Date): string {
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const hh = hours < 10 ? `0${hours}` : `${hours}`;
+      const mm = minutes < 10 ? `0${minutes}` : `${minutes}`;
+      return `${hh}:${mm}`;
+    }
+
+    const dateString = plannedDate.toISOString().slice(0, 10);
+    const startTimeString = formatTime(startTime);
+    const endTimeString = formatTime(endTime);
+
+    console.log("Planlagt økt:", { // send dette til firebase
+      date: dateString,
+      workoutId: selectedWorkoutId,
+      startTimeString,
+      endTimeString,
+    });
+
+    closeSheet(); // lukk etter “legg til”
+  }, [closeSheet, plannedDate, selectedWorkoutId, startTime, endTime]);
+
+  const [visibleMonth, setVisibleMonth] = useState<{year: number; month: number}>({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+  });
+
+  function monthLabel(year: number, month: number) {
+    return new Date(year, month - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
@@ -243,9 +279,50 @@ export default function CalendarScreen() {
 
           {/* body */}
           <View style={{ gap: 12 }}>
-            <Text style={{ color: '#666' }}>
-              Plan for {selected}.
-            </Text>
+            {/* dato picker */}
+            <View style={styles.timeRow}>
+              <View style={styles.timeField}>
+                <Text style={styles.timeLabel}>Dato</Text>
+                <DateTimePicker
+                  value={plannedDate}
+                  mode="date"
+                  display="compact"
+                  onChange={(event, date) => {
+                    if (date) setPlannedDate(date);
+                  }}
+                />
+              </View>
+            </View>
+
+            {/* tids picker */}
+            <View style={styles.timeRow}>
+              <View style={styles.timeField}>
+                <Text style={styles.timeLabel}>Start</Text>
+                <DateTimePicker
+                  value={startTime}
+                  mode="time"
+                  display="compact"
+                  onChange={(event, date) => {
+                    if (date) setStartTime(date);
+                  }}
+                />
+              </View>
+
+              <View style={styles.timeField}>
+                <Text style={styles.timeLabel}>Slutt</Text>
+                <DateTimePicker
+                  value={endTime}
+                  mode="time"
+                  display="compact"
+                  onChange={(event, date) => {
+                    if (date) setEndTime(date);
+                  }}
+                />
+              </View>
+            </View>
+
+
+            {/* workout picker */}
             <View style={styles.pickerWrapper}>
               <Text style={styles.pickerLabel}>Velg workout:</Text>
               <Picker
@@ -442,12 +519,30 @@ const styles = StyleSheet.create({
 
   pickerLabel: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
     color: "#111",
     padding: 12
   },
 
   picker: {
     width: "100%"
+  },
+
+  timeRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 8,
+  },
+
+  timeField: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  timeLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111",
+    marginBottom: 4,
   }
 });
