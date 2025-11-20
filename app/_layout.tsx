@@ -21,6 +21,9 @@ export default function RootLayout() {
   const startWaterReminders = async () => {
     const hasPermission = await waterReminderService.requestPermissions();
     if (hasPermission) {
+      await waterReminderService.startWaterReminders();
+      console.log('Vannpåminnelser har startet.');
+
       await waterReminderService.sendTestNotification();
       console.log('Test påminnelse er klar, du får den om 5 sekunder.');
     }
