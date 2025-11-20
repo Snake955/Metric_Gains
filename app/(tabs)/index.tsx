@@ -1,13 +1,144 @@
+// app/(tabs)/index.tsx
 import SpotifyLogo from "@/assets/images/spotify-blue.png";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import React from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import * as Progress from "react-native-progress";
-
+import { getCurrentlyPlaying, getStoredSpotifyToken, pausePlayback, playTrack, resumePlayback, skipToNext, skipToPrevious } from "../utils/spotifyAuth";
 
 export default function HomeScreen() {
+  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const isUpdatingRef = useRef(false);
+
+  const initSpotify = useCallback(async () => {
+    const token = await getStoredSpotifyToken();
+    setSpotifyToken(token);
+
+    if (token) {
+      const track = await getCurrentlyPlaying(token);
+      if (track) {
+        setCurrentTrack(track);
+        setIsPlaying(track.is_playing);
+      } else {
+        await playTrack(token);
+        setTimeout(async () => {
+          const newTrack = await getCurrentlyPlaying(token);
+          if (newTrack) {
+      }
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      initSpotify();
+    }, [initSpotify])
+  );
+
+  useEffect(() => {
+    initSpotify();
+  }, [initSpotify]);
+
+  const fetchCurrentTrack = async (token: string) => {
+    if (isUpdatingRef.current) return;
+
+    const track = await getCurrentlyPlaying(token);
+    if (track && track.item) {
+      setCurrentTrack(track);
+    }
+  };
+
+  useEffect(() => {
+    if (!spotifyToken) return;
+
+    const interval = setInterval(() => {
+      fetchCurrentTrack(spotifyToken);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [spotifyToken]);
+
+  const handlePlayPause = async () => {
+    if (!spotifyToken) return;
+
+    isUpdatingRef.current = true;
+    const newPlayState = !isPlaying;
+
+    try {
+      setIsPlaying(newPlayState);
+
+      if (newPlayState) {
+        if (currentTrack) {
+          await resumePlayback(spotifyToken);
+        } else {
+          await playTrack(spotifyToken);
+        }
+        console.log("▶️ Playing");
+      } else {
+        await pausePlayback(spotifyToken);
+        console.log("⏸️ Paused");
+      }
+
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 3000);
+    } catch (error) {
+      console.error("Play/Pause error:", error);
+      setIsPlaying(!newPlayState);
+      isUpdatingRef.current = false;
+    }
+  };
+
+  const handleSkipNext = async () => {
+    if (!spotifyToken) return;
+
+    isUpdatingRef.current = true;
+
+    try {
+      await skipToNext(spotifyToken);
+      console.log("⏭️ Next");
+
+      setTimeout(async () => {
+        const track = await getCurrentlyPlaying(spotifyToken);
+        if (track) {
+          setCurrentTrack(track);
+          setIsPlaying(track.is_playing);
+        }
+        isUpdatingRef.current = false;
+      }, 500);
+    } catch (error) {
+      console.error("Skip next error:", error);
+      isUpdatingRef.current = false;
+    }
+  };
+
+  const handleSkipPrevious = async () => {
+    if (!spotifyToken) return;
+
+    isUpdatingRef.current = true;
+
+    try {
+      await skipToPrevious(spotifyToken);
+      console.log("⏮️ Previous");
+
+      setTimeout(async () => {
+        const track = await getCurrentlyPlaying(spotifyToken);
+        if (track) {
+          setCurrentTrack(track);
+          setIsPlaying(track.is_playing);
+        }
+        isUpdatingRef.current = false;
+      }, 500);
+    } catch (error) {
+      console.error("Skip previous error:", error);
+      isUpdatingRef.current = false;
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -20,7 +151,9 @@ export default function HomeScreen() {
         </ThemedText>
         <IconSymbol name="bell.fill" size={24} color="#3f3f3fff" />
       </View>
-      {/* This part will be changed later so that instead of Erik it will take the assigned user's name */}
+
+            {/* This part will be changed later so that instead of Erik it will take the assigned user's name */}
+
       <ThemedText type="default">Good Morning, Erik!</ThemedText>
 
       <ThemedText style={styles.topbar_index}>
@@ -29,7 +162,7 @@ export default function HomeScreen() {
 
       {/* Activity */}
       <ThemedText type="subtitle" style={styles.sectionTitle}>
-        Today’s activity
+        Today´s activity
       </ThemedText>
       <View style={styles.activityRow}>
         <ThemedView style={styles.activityCard}>
@@ -70,31 +203,70 @@ export default function HomeScreen() {
         <ThemedText>Focus: Upper body</ThemedText>
       </ThemedView>
 
-      {/* Music API 
-      Denne blir fjernet senere for at vi skal ha den som en widget og ikke bare fast på en side
-      */}
-      <ThemedView style={styles.musicControls}>
-        <TouchableOpacity>
-          <IconSymbol name="shuffle" size={26} color="#888" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <IconSymbol name="chevron.left" size={26} color="#888" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <IconSymbol name="play.circle.fill" size={42} color="#888" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <IconSymbol name="chevron.right" size={26} color="#888" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <IconSymbol name="repeat" size={26} color="#888" />
-        </TouchableOpacity>
-      </ThemedView>
+      {/* Music Player */}
+      {spotifyToken && currentTrack ? (
+        <ThemedView style={styles.playerCard}>
+          {currentTrack.item?.album?.images?.[0]?.url && (
+            <View style={styles.albumContainer}>
+              <Image
+                source={{ uri: currentTrack.item.album.images[0].url }}
+                style={styles.albumArt}
+              />
+              <ThemedText type="defaultSemiBold" style={styles.trackName}>
+                {currentTrack.item?.name || "No track"}
+              </ThemedText>
+              <ThemedText style={styles.artistName}>
+                {currentTrack.item?.artists?.[0]?.name || "Unknown"}
+              </ThemedText>
+            </View>
+          )}
+
+          <View style={styles.musicControls}>
+            <TouchableOpacity
+              onPress={handleSkipPrevious}
+              style={styles.controlButton}
+              activeOpacity={0.7}
+            >
+              <IconSymbol name="backward.fill" size={32} color="#2D7FF9" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handlePlayPause}
+              style={styles.playButton}
+              activeOpacity={0.7}
+            >
+              <IconSymbol
+                name={isPlaying ? "pause.circle.fill" : "play.circle.fill"}
+                size={72}
+                color="#2D7FF9"
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleSkipNext}
+              style={styles.controlButton}
+              activeOpacity={0.7}
+            >
+              <IconSymbol name="forward.fill" size={32} color="#2D7FF9" />
+            </TouchableOpacity>
+          </View>
+        </ThemedView>
+      ) : (
+        <View style={styles.placeholderContainer}>
+          <ThemedText style={styles.placeholderText}>
+            Connect Spotify in Settings
+          </ThemedText>
+        </View>
+      )}
+
       <View style={styles.spotifyRow}>
         <ThemedText style={styles.spotifyText}>Spotify®</ThemedText>
-        <Image source={SpotifyLogo} style={styles.spotifyIcon} resizeMode="contain" />
-        </View>
-
+        <Image
+          source={SpotifyLogo}
+          style={styles.spotifyIcon}
+          resizeMode="contain"
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -105,10 +277,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 40,
   },
-
   greyDate: {
     color: "#888",
-    fontSize:10,
+    fontSize: 10,
   },
   header: {
     flexDirection: "row",
@@ -116,12 +287,11 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   topbar_index: {
-    fontSize:22,
-    paddingTop:10,
+    fontSize: 22,
+    paddingTop: 10,
     justifyContent: "center",
     alignItems: "center",
     textAlign: "center",
-
   },
   blue: {
     color: "#2D7FF9",
@@ -152,29 +322,71 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
   },
+  playerCard: {
+    padding: 20,
+    marginVertical: 20,
+    borderRadius: 16,
+    alignItems: "center",
+  },
+  albumContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  albumArt: {
+    width: 220,
+    height: 220,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  trackName: {
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  artistName: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
+  },
   musicControls: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "center",
     alignItems: "center",
-    marginVertical: 15,
-    borderRadius: 12,
-
+    gap: 40,
+    marginTop: 10,
   },
- spotifyRow: {
-  flexDirection: "row",
-  justifyContent: "center",
-  alignItems: "center",
-  marginBottom: 20,
-},
-
-spotifyText: {
-  textAlign: "center",
-  fontSize: 12,
-  marginRight: 5,
-},
-
-spotifyIcon: {
-  width: 16,
-  height: 16,
-},
+  controlButton: {
+    padding: 12,
+    backgroundColor: "rgba(45, 127, 249, 0.1)",
+    borderRadius: 50,
+  },
+  playButton: {
+    padding: 8,
+  },
+  placeholderContainer: {
+    padding: 30,
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  placeholderText: {
+    textAlign: "center",
+    fontSize: 14,
+    color: "#888",
+  },
+  spotifyRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  spotifyText: {
+    textAlign: "center",
+    fontSize: 12,
+    marginRight: 5,
+  },
+  spotifyIcon: {
+    width: 16,
+    height: 16,
+  },
 });
