@@ -40,7 +40,6 @@ export default function CalendarScreen() {
   const [plannedDate, setPlannedDate] = useState<Date>(new Date());
   const [plannedWorkouts, setPlannedWorkouts] = useState<PlannedWorkout[]>([]);
 
-
   const [startTime, setStartTime] = useState<Date>(() => {
   const d = new Date();
     d.setHours(10, 0, 0, 0);    // 10:00
@@ -235,6 +234,10 @@ export default function CalendarScreen() {
                 const isToday = date?.dateString === today;
                 const isSelected = date?.dateString === selected;
 
+                const hasPlanned = plannedWorkouts.some(
+                  (pw) => pw.date === date?.dateString
+                );
+
                 return (
                   <TouchableOpacity
                     onPress={() => date?.dateString && setSelected(date.dateString)}
@@ -246,31 +249,35 @@ export default function CalendarScreen() {
                       paddingVertical: 6,
                     }}
                   >
-                    <View
-                      style={[
-                        {
-                          minWidth: 32,
-                          minHeight: 32,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: 16,
-                        },
-                        isSelected && {
-                          backgroundColor: "#ffffff", // fylt hvit sirkel for valgt dag
-                        },
-                      ]}
-                    >
-                      <Text
-                        allowFontScaling={false}
-                        style={{
-                          textAlign: "center",
-                          includeFontPadding: false,
-                          color: isToday ? tint : "#000000ff", // blå tekst for dagens dato
-                          opacity: state === "disabled" ? 0.4 : 1,
-                        }}
+                    <View style={{ alignItems: "center" }}>
+                      <View
+                        style={[
+                          {
+                            minWidth: 32,
+                            minHeight: 32,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 16,
+                          },
+                          isSelected && {
+                            backgroundColor: "#ffffff", // fylt hvit sirkel for valgt dag
+                          },
+                        ]}
                       >
-                        {date?.day ?? ""}
-                      </Text>
+                        <Text
+                          allowFontScaling={false}
+                          style={{
+                            textAlign: "center",
+                            includeFontPadding: false,
+                            color: isToday ? tint : "#000000ff", // blå tekst for dagens dato
+                            opacity: state === "disabled" ? 0.4 : 1,
+                          }}
+                        >
+                          {date?.day ?? ""}
+                        </Text>
+                      </View>
+                      {/* liten prikk under datoen hvis det finnes planlagt økt */}
+                      {hasPlanned && <View style={styles.dotIndicator} />}
                     </View>
                   </TouchableOpacity>
                 );
@@ -626,5 +633,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#111",
     marginBottom: 4,
+  },
+
+  dotIndicator: {
+    marginTop: -2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#2f6cf9",
   }
 });
