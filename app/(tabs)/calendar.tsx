@@ -21,12 +21,25 @@ type Workout = {
   createdAt?: string;
 };
 
+type PlannedWorkout = {
+  id: string;
+  userId: string;
+  workoutId: string;
+  workoutName: string | null;
+  date: string;      // "YYYY-MM-DD"
+  startTime: string; // "HH:MM"
+  endTime: string;   // "HH:MM"
+  createdAt: string;
+};
+
 export default function CalendarScreen() {
   const colorScheme = useColorScheme();
   const tint = Colors[colorScheme ?? 'light'].tint;
   const today = new Date().toISOString().slice(0, 10);
   const [selected, setSelected] = useState<string>(today);
   const [plannedDate, setPlannedDate] = useState<Date>(new Date());
+  const [plannedWorkouts, setPlannedWorkouts] = useState<PlannedWorkout[]>([]);
+
 
   const [startTime, setStartTime] = useState<Date>(() => {
   const d = new Date();
@@ -106,6 +119,12 @@ export default function CalendarScreen() {
     try {
       const docRef = await addDoc(collection(FIRESTORE_DB, "planned_workouts"), plannedWorkout);
       console.log("Planned workout saved with ID:", docRef.id);
+
+      setPlannedWorkouts((prev) => [
+        ...prev,
+        { id: docRef.id, ...plannedWorkout },
+      ]);
+
       closeSheet(); // lukk etter “legg til”
     } catch (error) {
       console.error("Error saving planned workout:", error);
@@ -128,8 +147,10 @@ export default function CalendarScreen() {
       setUser(user);
       if (user) {
         loadUserWorkouts(user.uid);
+        loadPlannedWorkouts(user.uid);
       } else {
         setUserWorkouts([]);
+        setPlannedWorkouts([]);
       }
     });
 
@@ -154,6 +175,30 @@ export default function CalendarScreen() {
       console.error("Error loading user workouts:", error);
     }
   };
+
+  const loadPlannedWorkouts = async (userId: string) => {
+    try {
+      const plannedQuery = query(
+        collection(FIRESTORE_DB, 'planned_workouts'),
+        where('userId', '==', userId)
+      );
+
+      const querySnapshot = await getDocs(plannedQuery);
+      const items = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as PlannedWorkout[];
+
+      setPlannedWorkouts(items);
+    } catch (error) {
+      console.error("Error loading planned workouts:", error);
+    }
+  };
+
+  const plannedForSelected = plannedWorkouts.find(
+    (pw) => pw.date === selected
+  );
+
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -240,22 +285,36 @@ export default function CalendarScreen() {
 
         <Text style={styles.sectionTitle}>My workouts</Text>
         <View style={styles.body}>
-          <View style={styles.card}>
-            <View style={styles.cardLeftContent}>
-              <Text style={styles.cardTitle}>Strength</Text>
-              <Text style={styles.cardTime}>10:00 - 14:00</Text>
-              <Text>    </Text>
-              <Text style={styles.cardText}>Focus: Upper Body</Text>
-              <Text style={styles.cardText}>Exercises: 8</Text>
-            </View>
+          {plannedForSelected ? (
+            <View style={styles.card}>
+              <View style={styles.cardLeftContent}>
+                <Text style={styles.cardTitle}>
+                  {plannedForSelected.workoutName || "Planlagt økt"}
+                </Text>
+                <Text style={styles.cardTime}>
+                  {plannedForSelected.startTime} - {plannedForSelected.endTime}
+                </Text>
+                <Text> </Text>
+                <Text style={styles.cardText}>Dato: {plannedForSelected.date}</Text>
+              </View>
 
-            <View style={styles.cardRightContent}>
-              <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
-              <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9"}]}>
-                <Text style={styles.btnText}>Change</Text>
-              </TouchableOpacity>
+              <View style={styles.cardRightContent}>
+                <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
+                <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9"}]}>
+                  <Text style={styles.btnText}>Change</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          ) : (
+            <View style={styles.card}>
+              <View style={styles.cardLeftContent}>
+                <Text style={styles.cardTitle}>Ingen planlagt økt</Text>
+                <Text style={styles.cardText}>
+                  Trykk på + for å planlegge en økt for denne dagen.
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
 
         <Text style={styles.sectionTitle}>Friend workouts</Text>
