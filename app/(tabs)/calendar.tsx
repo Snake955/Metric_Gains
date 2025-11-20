@@ -194,9 +194,13 @@ export default function CalendarScreen() {
     }
   };
 
-  const plannedForSelected = plannedWorkouts.find(
-    (pw) => pw.date === selected
-  );
+  //const plannedForSelected = plannedWorkouts.find(
+    //(pw) => pw.date === selected
+  //);
+
+  const plannedForSelected = plannedWorkouts
+    .filter((pw) => pw.date === selected)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
 
   return (
@@ -292,27 +296,7 @@ export default function CalendarScreen() {
 
         <Text style={styles.sectionTitle}>My workouts</Text>
         <View style={styles.body}>
-          {plannedForSelected ? (
-            <View style={styles.card}>
-              <View style={styles.cardLeftContent}>
-                <Text style={styles.cardTitle}>
-                  {plannedForSelected.workoutName || "Planlagt økt"}
-                </Text>
-                <Text style={styles.cardTime}>
-                  {plannedForSelected.startTime} - {plannedForSelected.endTime}
-                </Text>
-                <Text> </Text>
-                <Text style={styles.cardText}>Dato: {plannedForSelected.date}</Text>
-              </View>
-
-              <View style={styles.cardRightContent}>
-                <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
-                <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9"}]}>
-                  <Text style={styles.btnText}>Change</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
+          {plannedForSelected.length === 0 ? (
             <View style={styles.card}>
               <View style={styles.cardLeftContent}>
                 <Text style={styles.cardTitle}>Ingen planlagt økt</Text>
@@ -321,6 +305,31 @@ export default function CalendarScreen() {
                 </Text>
               </View>
             </View>
+          ) : (
+            plannedForSelected.map((pw) => (
+              <View key={pw.id} style={styles.card}>
+                <View style={styles.cardLeftContent}>
+                  <Text style={styles.cardTitle}>
+                    {pw.workoutName || "Planlagt økt"}
+                  </Text>
+                  <Text style={styles.cardTime}>
+                    {pw.startTime} - {pw.endTime}
+                  </Text>
+                  <Text style={styles.cardText}>Dato: {pw.date}</Text>
+                </View>
+
+                <View style={styles.cardRightContent}>
+                  <Image
+                    source={UpperBody}
+                    style={styles.UpperBodyIcon}
+                    resizeMode="contain"
+                  />
+                  <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9" }]}>
+                    <Text style={styles.btnText}>Change</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))
           )}
         </View>
 
