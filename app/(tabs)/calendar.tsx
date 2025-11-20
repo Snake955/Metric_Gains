@@ -7,7 +7,7 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from "@react-native-picker/picker";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CalendarProvider, WeekCalendar } from 'react-native-calendars';
@@ -40,8 +40,6 @@ export default function CalendarScreen() {
     return d;
   });
 
-
-
   const [user, setUser] = useState<User | null>(null);
   const [userWorkouts, setUserWorkouts] = useState<Workout[]>([]);
 
@@ -68,28 +66,53 @@ export default function CalendarScreen() {
   }, [selected]);
   const closeSheet = useCallback(() => sheetRef.current?.dismiss(), []);
 
-  const onAdd = useCallback(() => {
-    function formatTime(date: Date): string {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      const hh = hours < 10 ? `0${hours}` : `${hours}`;
-      const mm = minutes < 10 ? `0${minutes}` : `${minutes}`;
-      return `${hh}:${mm}`;
+  function formatTime(date: Date): string {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const hh = hours < 10 ? `0${hours}` : `${hours}`;
+    const mm = minutes < 10 ? `0${minutes}` : `${minutes}`;
+    return `${hh}:${mm}`;
+  }
+
+  const onAdd = useCallback(async () => {
+    if (!user) {
+      alert("Du må være innlogget for å planlegge en økt");
+      return;
+    }
+
+    if (!selectedWorkoutId) {
+      alert("Velg en workout før du legger til");
+      return;
     }
 
     const dateString = plannedDate.toISOString().slice(0, 10);
     const startTimeString = formatTime(startTime);
     const endTimeString = formatTime(endTime);
 
-    console.log("Planlagt økt:", { // send dette til firebase
-      date: dateString,
-      workoutId: selectedWorkoutId,
-      startTimeString,
-      endTimeString,
-    });
+    const selectedWorkout = allWorkouts.find((w) => w.id === selectedWorkoutId);
 
-    closeSheet(); // lukk etter “legg til”
-  }, [closeSheet, plannedDate, selectedWorkoutId, startTime, endTime]);
+    const plannedWorkout = {
+      userId: user.uid,
+      workoutId: selectedWorkoutId,
+      workoutName: selectedWorkout?.name ?? null,
+      date: dateString,
+      startTime: startTimeString,
+      endTime: endTimeString,
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log("Planlagt økt:", plannedWorkout);
+
+    try {
+      const docRef = await addDoc(collection(FIRESTORE_DB, "planned_workouts"), plannedWorkout);
+      console.log("Planned workout saved with ID:", docRef.id);
+      closeSheet(); // lukk etter “legg til”
+    } catch (error) {
+      console.error("Error saving planned workout:", error);
+      alert("Kunne ikke lagre planlagt økt. Prøv igjen.");
+    }
+  }, [closeSheet, plannedDate, selectedWorkoutId, startTime, endTime, user, allWorkouts]);
+
 
   const [visibleMonth, setVisibleMonth] = useState<{year: number; month: number}>({
     year: new Date().getFullYear(),
