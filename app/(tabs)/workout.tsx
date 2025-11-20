@@ -1,6 +1,7 @@
-import { FIRESTORE_DB } from '@/FirebaseConfig';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { Picker } from "@react-native-picker/picker";
-import { collection, getDocs } from "firebase/firestore";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import { Button, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,10 +20,25 @@ type Workout = {
   id: string;
   name: string;
   exercises: Exercise[];
+  userId?: string;
+  createdAt?: string;
+};
+
+type WorkoutSession = {
+  workoutName: string | null;
+  startedAt: string | null;
+  endedAt: string;
+  durationSeconds: number;
+  duration: string;
+  userId: string;
+  exercises: any[];
+  totalExercises: number;
+  completedSets: number;
+  totalSets: number;
 };
 
 const DEFAULT_WORKOUT = [
-    {
+  {
     id: "jog",
     name: "Joggetur",
     exercises: [],
@@ -35,6 +51,7 @@ const DEFAULT_WORKOUT = [
 ];
 
 export default function WorkoutMain() {
+  const [user, setUser] = useState<User | null>(null);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [timeCount, setTimeCount] = useState(0);
   const [lastWorkoutDuration, setLastWorkoutDuration] = useState(0);
@@ -59,6 +76,37 @@ export default function WorkoutMain() {
   const [loading, setLoading] = useState(true);
   const [exerciseSets, setExerciseSets] = useState<{ [key: string]: { sets: string, reps: string, weight: string } }>({});
   const [customWorkoutName, setCustomWorkoutName] = useState('');
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      setUser(user);
+      if (user) {
+        loadUserWorkouts(user.uid);
+      } else {
+        setUserWorkouts([]);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const loadUserWorkouts = async (userId: string) => {
+    try {
+      const workoutsQuery = query(
+        collection(FIRESTORE_DB, 'user_workouts'),
+        where('userId', '==', userId)
+      );
+
+      const querySnapshot = await getDocs(workoutsQuery);
+      const workouts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Workout[];
+
+      setUserWorkouts(workouts);
+    } catch (error) {
+      console.error("Error loading user workouts:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchExercises = async () => {
@@ -82,6 +130,11 @@ export default function WorkoutMain() {
   }, []);
 
   function handleStartPress() {
+    if (!user) {
+      alert("Please sign in to start a workout");
+      return;
+    }
+
     setIsWorkoutActive(true);
     setTimeCount(0);
     setStartTimer(new Date());
@@ -151,25 +204,48 @@ export default function WorkoutMain() {
     }
   }
 
-  function handleStopPress() {
-    if (!isWorkoutActive) return;
-    setLastWorkoutDuration(timeCount);
-    setLastWorkoutStart(startTimer);
-    setLastWorkoutName(ongoingWorkout ? ongoingWorkout.name : null);
+  const handleStopPress = async () => {
+    if (!isWorkoutActive || !user) return;
 
+    const workoutDuration = timeCount;
+    const workoutStartTime = startTimer;
+    const workoutName = ongoingWorkout ? ongoingWorkout.name : null;
+
+    setLastWorkoutDuration(workoutDuration);
+    setLastWorkoutStart(workoutStartTime);
+    setLastWorkoutName(workoutName);
     setIsWorkoutActive(false);
     setOngoingWorkout(null);
     setActiveExerciseSets({});
-    // Add sets, reps and weight to send to the database next
-    const sessionForDB = {
-      workoutName: ongoingWorkout ? ongoingWorkout.name : null,
-      startedAt: startTimer ? startTimer.toISOString() : null,
-      durationSeconds: timeCount,
-      durationPretty: formatTime(timeCount),
+
+    const sessionForDB: WorkoutSession = {
+      workoutName: workoutName,
+      startedAt: workoutStartTime ? workoutStartTime.toISOString() : null,
+      endedAt: new Date().toISOString(),
+      durationSeconds: workoutDuration,
+      duration: formatTime(workoutDuration),
+      userId: user.uid,
+      exercises: ongoingWorkout?.exercises.map(exercise => ({
+        exerciseId: exercise.id,
+        exerciseName: exercise.name,
+        muscleGroup: exercise.muscle_group,
+        sets: activeExerciseSets[exercise.id] || []
+      })) || [],
+      totalExercises: ongoingWorkout?.exercises.length || 0,
+      completedSets: Object.values(activeExerciseSets).flat().filter(set => set.completed).length,
+      totalSets: Object.values(activeExerciseSets).flat().length
     };
 
     console.log("Workout finished:", sessionForDB);
-  }
+
+    try {
+      const docRef = await addDoc(collection(FIRESTORE_DB, 'workout_sessions'), sessionForDB);
+      console.log("Workout session saved to Firestore with ID:", docRef.id);
+    } catch (error) {
+      console.error('Error saving workout session to Firestore:', error);
+      alert('Workout completed but failed to save session data.');
+    }
+  };
 
   useEffect(() => {
     if (isWorkoutActive) {
@@ -234,8 +310,11 @@ export default function WorkoutMain() {
     });
   };
 
-  const handleSaveWorkout = () => {
-    if (selectedExercises.length === 0) return;
+  const handleSaveWorkout = async () => {
+    if (selectedExercises.length === 0 || !user) {
+      alert("Please select exercises and make sure you are signed in");
+      return;
+    }
 
     const exercisesWithSetsReps = selectedExercises.map(exercise => ({
       ...exercise,
@@ -246,17 +325,32 @@ export default function WorkoutMain() {
 
     const workoutName = customWorkoutName.trim() || `Custom Workout ${userWorkouts.length + 1}`;
 
-    const newWorkout = {
-      id: "user_" + Date.now(),
-      name: workoutName,
-      exercises: exercisesWithSetsReps,
-    };
-    setUserWorkouts((prev) => [...prev, newWorkout]);
-    setSelectedExercises([]);
-    setExerciseSets({});
-    setCustomWorkoutName('');
-    setIsModalVisible(false);
-    setSelectedWorkoutId(newWorkout.id);
+    try {
+      const docRef = await addDoc(collection(FIRESTORE_DB, 'user_workouts'), {
+        name: workoutName,
+        exercises: exercisesWithSetsReps,
+        userId: user.uid,
+        createdAt: new Date().toISOString(),
+      });
+
+      const newWorkout = {
+        id: docRef.id,
+        name: workoutName,
+        exercises: exercisesWithSetsReps,
+      };
+
+      setUserWorkouts((prev) => [...prev, newWorkout]);
+      setSelectedExercises([]);
+      setExerciseSets({});
+      setCustomWorkoutName('');
+      setIsModalVisible(false);
+      setSelectedWorkoutId(newWorkout.id);
+
+      console.log("Workout saved to Firestore with ID:", docRef.id);
+    } catch (error) {
+      console.error('Error saving workout to Firestore:', error);
+      alert('Failed to save workout. Please try again.');
+    }
   };
 
   const addNewSet = (exerciseId: string) => {
@@ -278,7 +372,6 @@ export default function WorkoutMain() {
       };
     });
   };
-
 
   if (loading) {
     return (
@@ -485,6 +578,9 @@ export default function WorkoutMain() {
                   Startet: {formatStartTime(lastWorkoutStart)}
                 </Text>
               )}
+              <Text style={styles.prevWorkoutSaved}>
+                ✅ Saved to your workout history
+              </Text>
             </View>
           )}
         </View>
@@ -711,15 +807,15 @@ const styles = StyleSheet.create({
     borderColor: "#d4d4d4",
     marginBottom: 16,
   },
-  cardTitle: { 
-    fontSize: 16, 
-    fontWeight: "600", 
-    color: "#111", 
-    marginBottom: 4 
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111",
+    marginBottom: 4
   },
-  cardText: { 
-    fontSize: 14, 
-    color: "#555" 
+  cardText: {
+    fontSize: 14,
+    color: "#555"
   },
   buttonStart: {
     backgroundColor: "#2f6cf9",
@@ -733,10 +829,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
-  buttonText: { 
-    color: "#fff", 
-    fontWeight: "600", 
-    fontSize: 16 
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16
   },
   prevWorkoutBox: {
     marginTop: 16,
@@ -746,14 +842,20 @@ const styles = StyleSheet.create({
     borderColor: "#d4d4d4",
     padding: 12,
   },
-  prevWorkoutTitle: { 
-    fontSize: 16, 
-    fontWeight: "600", 
-    color: "#111" 
+  prevWorkoutTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111"
   },
-  prevWorkoutLine: { 
-    fontSize: 14, 
-    color: "#444" 
+  prevWorkoutLine: {
+    fontSize: 14,
+    color: "#444"
+  },
+  prevWorkoutSaved: {
+    fontSize: 12,
+    color: "#22c55e",
+    fontWeight: "500",
+    marginTop: 4,
   },
   exerciseList: {
     marginBottom: 16,
@@ -771,8 +873,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e5e5e5",
   },
   exerciseEmpty: {
-    fontSize: 14, 
-    color: "#777", 
+    fontSize: 14,
+    color: "#777",
     padding: 12
   },
   activeExerciseContainer: {

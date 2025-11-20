@@ -40,7 +40,8 @@
         }
       ],
       "expo-web-browser",
-      "react-native-app-auth"
+      "react-native-app-auth",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
