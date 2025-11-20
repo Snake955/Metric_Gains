@@ -2,7 +2,8 @@ import UpperBody from "@/assets/images/UpperbodyIcon.png";
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CalendarProvider, WeekCalendar } from 'react-native-calendars';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,6 +13,18 @@ export default function CalendarScreen() {
   const tint = Colors[colorScheme ?? 'light'].tint;
   const today = new Date().toISOString().slice(0, 10);
   const [selected, setSelected] = useState<string>(today);
+
+  const sheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ['75%'], []);
+
+  const openSheet = useCallback(() => sheetRef.current?.present(), []);
+  const closeSheet = useCallback(() => sheetRef.current?.dismiss(), []);
+
+  const onAdd = useCallback(() => {
+    // legg til logikk for å lagre/legge til økt her
+
+    closeSheet(); // lukk etter “legg til”
+  }, [closeSheet]);
 
   const [visibleMonth, setVisibleMonth] = useState<{year: number; month: number}>({
     year: new Date().getFullYear(),
@@ -27,7 +40,7 @@ export default function CalendarScreen() {
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Calendar</Text>
-          <TouchableOpacity style={styles.addButton} onPress={() => {}}>
+          <TouchableOpacity style={styles.addButton} onPress={openSheet}>
             <Ionicons name="add" size={28} color={"#000000ff"} />
           </TouchableOpacity>
         </View>
@@ -140,6 +153,43 @@ export default function CalendarScreen() {
           </View>
         </View>
       </ScrollView>
+      <BottomSheetModal 
+        ref={sheetRef}
+        snapPoints={snapPoints}
+        index={0} // bruker første index i snappointsa våre (akkurat nå har vi bare ett uansett)
+        enableDynamicSizing={false} // tvinger at den bruker snappointsa våre og ikke egne dynamiske snappoints
+        enablePanDownToClose
+        backdropComponent={({ style }) => (
+          <View style={[style, { backgroundColor: 'rgba(0,0,0,0.25)' }]} /> // litt grå bakgrunn når man har modulen aktiv
+        )}
+      >
+        <BottomSheetView style={{ padding: 16 }}>
+          {/* header */}
+          <View style={styles.sheetHeader}>
+            <TouchableOpacity onPress={closeSheet} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={styles.sheetBtnText}>Avbryt</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.sheetTitle}>Planlegg ny økt</Text>
+
+            <TouchableOpacity onPress={onAdd} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={[styles.sheetBtnText, styles.sheetPrimary]}>Legg til</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* tynn skillelinje */}
+          <View style={styles.sheetDivider} />
+
+          {/* body */}
+          <View style={{ gap: 12 }}>
+            <Text style={{ color: '#666' }}>
+              Her kan du legge inn en rask økt for {selected}.
+            </Text>
+            {/* legg til input ting under her */}
+          </View>
+        </BottomSheetView>
+      </BottomSheetModal>
+
     </SafeAreaView>
   );
 }
@@ -281,5 +331,32 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     marginLeft: 10,
+  },
+
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+
+  sheetBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  sheetPrimary: {
+    color: '#2f6cf9',
+  },
+
+  sheetDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#e6e6e6',
+    marginBottom: 12,
   }
 });
