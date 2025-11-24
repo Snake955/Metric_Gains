@@ -9,7 +9,14 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMotionUsageDescription": "This app uses motion data to track your steps during workouts.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to track your workout route."
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyCvEcQ8bFwGBiBmhuaQ2z6NGk5mf_UVvnY"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +26,17 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACTIVITY_RECOGNITION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCvEcQ8bFwGBiBmhuaQ2z6NGk5mf_UVvnY"
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -40,7 +57,13 @@
         }
       ],
       "expo-web-browser",
-      "react-native-app-auth"
+      "react-native-app-auth",
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Allow $(PRODUCT_NAME) to access your motion and fitness data to track steps during workouts."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
