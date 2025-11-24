@@ -316,22 +316,34 @@ export default function WorkoutMain() {
       return;
     }
 
-    const exercisesWithSetsReps = selectedExercises.map(exercise => ({
-      ...exercise,
-      sets: exerciseSets[exercise.id]?.sets || "",
-      reps: exerciseSets[exercise.id]?.reps || "",
-      weight: exerciseSets[exercise.id]?.weight || "",
-    }));
+    const exercisesWithSetsReps = selectedExercises.map(exercise => {
+      const sets = exerciseSets[exercise.id]?.sets || "0";
+      const reps = exerciseSets[exercise.id]?.reps || "0";
+      const weight = exerciseSets[exercise.id]?.weight || "0";
+
+      return {
+        id: String(exercise.id),
+        name: String(exercise.name || ""),
+        muscle_group: String(exercise.muscle_group || ""),
+        sets: String(sets),
+        reps: String(reps),
+        weight: String(weight),
+      };
+    });
 
     const workoutName = customWorkoutName.trim() || `Custom Workout ${userWorkouts.length + 1}`;
 
     try {
-      const docRef = await addDoc(collection(FIRESTORE_DB, 'user_workouts'), {
-        name: workoutName,
+      const workoutData = {
+        name: String(workoutName),
         exercises: exercisesWithSetsReps,
-        userId: user.uid,
+        userId: String(user.uid),
         createdAt: new Date().toISOString(),
-      });
+      };
+
+      console.log("Final workout data to save:", workoutData);
+
+      const docRef = await addDoc(collection(FIRESTORE_DB, 'user_workouts'), workoutData);
 
       const newWorkout = {
         id: docRef.id,
@@ -349,7 +361,15 @@ export default function WorkoutMain() {
       console.log("Workout saved to Firestore with ID:", docRef.id);
     } catch (error) {
       console.error('Error saving workout to Firestore:', error);
-      alert('Failed to save workout. Please try again.');
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        const firebaseError = error as any;
+        console.error('Firebase error code:', firebaseError.code);
+        console.error('Firebase error details:', firebaseError.details);
+        alert(`Failed to save workout: ${error.message}`);
+      } else {
+        alert('Failed to save workout. Please try again.');
+      }
     }
   };
 
