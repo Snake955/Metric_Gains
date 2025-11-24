@@ -64,6 +64,12 @@ class WaterReminderService {
   }
 
 
+  async cancelAllReminders() {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    console.log(' Alle vannpåminnelser er kansellert');
+  }
+
+
   async sendTestNotification() {
     await Notifications.scheduleNotificationAsync({
       content: {
