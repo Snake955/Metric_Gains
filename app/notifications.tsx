@@ -1,8 +1,21 @@
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
+import { useState, useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
 
 export default function NotificationsScreen() {
+
+    const [notifications, setNotifications] = useState<any[]>([]);
+
+    useEffect(() => {
+        const getNotifications = async () => {
+            const reminder = await Notifications.getAllScheduledNotificationsAsync();
+            setNotifications(reminder);
+        };
+        getNotifications();
+    }, []);
+
   return (
     <SafeAreaView style={styles.screen}>
         <View style={styles.header}>
@@ -10,7 +23,7 @@ export default function NotificationsScreen() {
         </View>
 
         <ScrollView style={styles.container}>
-            <ThemedText>Notifications will be below here.</ThemedText>
+            <ThemedText>Notifications: {notifications.length}</ThemedText>
         </ScrollView>
     </SafeAreaView>
   );
