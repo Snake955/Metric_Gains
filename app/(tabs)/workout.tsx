@@ -1,7 +1,9 @@
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { Picker } from "@react-native-picker/picker";
+import { useRouter } from 'expo-router';
 import { onAuthStateChanged, User } from "firebase/auth";
 import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { Info } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from "react";
 import { Button, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,7 +15,11 @@ type Exercise = {
   sets?: number | string;
   reps?: number | string;
   weight?: string;
-  complete?: boolean
+  complete?: boolean;
+  gifUrl?: string;
+  instructions?: string;
+  equipment?: string;
+  difficulty?: string;
 };
 
 type Workout = {
@@ -51,6 +57,7 @@ const DEFAULT_WORKOUT = [
 ];
 
 export default function WorkoutMain() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [timeCount, setTimeCount] = useState(0);
@@ -117,6 +124,10 @@ export default function WorkoutMain() {
           name: doc.data().name || doc.id,
           muscle_group: doc.data().muscle_group,
           weight: doc.data().weight || "-",
+          gifUrl: doc.data().gifUrl || "",
+          instructions: doc.data().instructions || "",
+          equipment: doc.data().equipment || "Bodyweight / Weights",
+          difficulty: doc.data().difficulty || "Intermediate",
         }));
         setExercises(data);
       } catch (error) {
@@ -128,6 +139,23 @@ export default function WorkoutMain() {
 
     fetchExercises();
   }, []);
+
+  const handleInfoPress = (exercise: Exercise) => {
+    const encodedGifUrl = exercise.gifUrl ? encodeURI(exercise.gifUrl) : '';
+
+    router.push({
+      pathname: '/modal',
+      params: {
+        id: exercise.id,
+        name: exercise.name,
+        muscle_group: exercise.muscle_group || '',
+        gifUrl: encodedGifUrl,
+        instructions: exercise.instructions || '',
+        equipment: exercise.equipment || '',
+        difficulty: exercise.difficulty || '',
+      },
+    });
+  };
 
   function handleStartPress() {
     if (!user) {
@@ -473,10 +501,20 @@ export default function WorkoutMain() {
                   return (
                     <View key={ex.id} style={styles.activeExerciseContainer}>
                       <View style={styles.exerciseRow}>
-                        <Text style={styles.exerciseName}>{ex.name}</Text>
-                        <Text style={styles.exerciseDetail}>
-                          {ex.muscle_group && ex.muscle_group}
-                        </Text>
+                        <View style={styles.exerciseInfo}>
+                          <Text style={styles.exerciseName}>{ex.name}</Text>
+                          <Text style={styles.exerciseDetail}>
+                            {ex.muscle_group && ex.muscle_group}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.infoButton}
+                          onPress={() => handleInfoPress(ex)}
+                        >
+                          <Info color="#111" size={20} />
+                        </TouchableOpacity>
+
                       </View>
                       <View style={styles.setsRepsLabel}>
                         <View style={styles.setsHeader}>
@@ -657,48 +695,67 @@ export default function WorkoutMain() {
                           {item.weight && "-" + (item.weight)}
                         </Text>
                       </View>
-                      <Text style={styles.modalExerciseText}>
-                        {isSelected ? '' : ''}
-                      </Text>
+
+                      <View style={styles.exerciseActions}>
+                        <TouchableOpacity
+                          style={styles.infoButton}
+                          onPress={() => handleInfoPress(item)}
+                        >
+                          <Info size={20} color="#fff" />
+                        </TouchableOpacity>
+
+
+                        <Text style={styles.modalExerciseText}>
+                          {isSelected ? '' : ''}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
 
                     {isSelected && (
                       <View style={styles.setsRepsContainer}>
-                        <Text style={styles.setsRepsLabel}>Sets:</Text>
-                        <TextInput
-                          style={styles.setsRepsInput}
-                          value={currentSets}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateExerciseSetsReps(item.id, text, currentReps, currentWeight);
-                          }}
-                        />
+                        <View style={styles.inputsRow}>
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.setsRepsLabel}>Sets</Text>
+                            <TextInput
+                              style={styles.setsRepsInput}
+                              value={currentSets}
+                              placeholder="0"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                updateExerciseSetsReps(item.id, text, currentReps, currentWeight);
+                              }}
+                            />
+                          </View>
 
-                        <Text style={styles.setsRepsLabel}>Reps:</Text>
-                        <TextInput
-                          style={styles.setsRepsInput}
-                          value={currentReps}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateExerciseSetsReps(item.id, currentSets, text, currentWeight);
-                          }}
-                        />
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.setsRepsLabel}>Reps</Text>
+                            <TextInput
+                              style={styles.setsRepsInput}
+                              value={currentReps}
+                              placeholder="0"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                updateExerciseSetsReps(item.id, currentSets, text, currentWeight);
+                              }}
+                            />
+                          </View>
 
-                        <Text style={styles.setsRepsLabel}>Weight:</Text>
-                        <TextInput
-                          style={styles.setsRepsInput}
-                          value={currentWeight}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateExerciseSetsReps(item.id, currentSets, currentReps, text);
-                          }}
-                        />
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.setsRepsLabel}>Weight</Text>
+                            <TextInput
+                              style={styles.setsRepsInput}
+                              value={currentWeight}
+                              placeholder="0"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                updateExerciseSetsReps(item.id, currentSets, currentReps, text);
+                              }}
+                            />
+                          </View>
+                        </View>
                       </View>
                     )}
                   </View>
@@ -906,6 +963,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 12,
   },
+  exerciseInfo: {
+    flex: 1,
+  },
   exerciseName: {
     fontSize: 14,
     fontWeight: "500",
@@ -941,25 +1001,33 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   setsRepsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
     padding: 12,
     backgroundColor: "#333",
     borderTopWidth: 1,
     borderTopColor: "#444",
   },
+  inputsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  inputGroup: {
+    alignItems: "center",
+    flex: 1,
+  },
   setsRepsLabel: {
     color: "#fff",
     fontSize: 14,
-    marginRight: 8,
-    marginLeft: 12,
+    marginBottom: 6,
+    textAlign: "center",
+    width: "100%",
   },
   setsRepsInput: {
     backgroundColor: "#111",
     color: "#fff",
     padding: 8,
     borderRadius: 4,
-    width: 50,
+    width: 60,
     textAlign: "center",
   },
   saveWorkoutButton: {
@@ -1073,5 +1141,16 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 14,
+  },
+  exerciseActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  infoButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  infoButtonText: {
+    fontSize: 18,
   },
 });
