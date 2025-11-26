@@ -6,24 +6,28 @@ import * as Notifications from 'expo-notifications';
 
 export default function NotificationsScreen() {
 
-    const [notifications, setNotifications] = useState<any[]>([]);
+const [notifications, setNotifications] = useState<any[]>([]);
 
-    useEffect(() => {
-        const getNotifications = async () => {
-            const reminder = await Notifications.getAllScheduledNotificationsAsync();
-            setNotifications(reminder);
-        };
-        getNotifications();
-    }, []);
+useEffect(() => {
+    const getNotifications = async () => {
+        const reminder = await Notifications.getAllScheduledNotificationsAsync();
+        setNotifications(reminder);
+    };
+    getNotifications();
+}, []);
 
-  return (
+const waterReminders = notifications.filter(n => 
+    n.content.title?.includes('💧')
+);
+
+return (
     <SafeAreaView style={styles.screen}>
-        <View style={styles.header}>
-            <ThemedText type="title">Notifications</ThemedText>
-        </View>
+    <View style={styles.header}>
+        <ThemedText type="title">Notifications</ThemedText>
+    </View>
 
-        <ScrollView style={styles.container}>
-            <ThemedText>Notifications: {notifications.length}</ThemedText>
+    <ScrollView style={styles.container}>
+        <ThemedText>Water reminders: {waterReminders.length}</ThemedText>
         </ScrollView>
     </SafeAreaView>
   );

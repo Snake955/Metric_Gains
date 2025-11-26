@@ -11,18 +11,18 @@ Notifications.setNotificationHandler({
 });
 
 const waterNotifs = [
-  "00: Drink some water!!",
-  "02: Water time:D",
-  "04: Get hydrated buddy!",
-  "06: It's morning, Get some H2O",
-  "08: Drink up that bottle of yours!!",
-  "10: You know what time it is.. WATER TIME:D",
-  "12: Get some lunch and get some WATER!",
-  "14: Fill up your stomach with WATER!!",
-  "16: Hydration again and again!",
-  "18: Late water time!",
-  "20: Little bit more water before bed.",
-  "22: Last sip of water:D, you have basically drank the pacific ocean, great job!",
+  "💧00: Drink some water!!",
+  "💧02: Water time:D",
+  "💧04: Get hydrated buddy!",
+  "💧06: It's morning, Get some H2O",
+  "💧08: Drink up that bottle of yours!!",
+  "💧10: You know what time it is.. WATER TIME:D",
+  "💧12: Get some lunch and get some WATER!",
+  "💧14: Fill up your stomach with WATER!!",
+  "💧16: Hydration again and again!",
+  "💧18: Late water time!",
+  "💧20: Little bit more water before bed.",
+  "💧22: Last sip of water:D, you have basically drank the pacific ocean, great job!",
 ];
 
 class WaterReminderService {
@@ -67,25 +67,6 @@ class WaterReminderService {
   async cancelAllReminders() {
     await Notifications.cancelAllScheduledNotificationsAsync();
     console.log(' Alle vannpåminnelser er kansellert');
-  }
-
-
-  async sendTestNotification() {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Test påminnelse",
-        body: "Dette er test, hei:D",
-        sound: true,
-        data: { type: 'test' },
-      },
-      trigger: { 
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 5,
-        repeats: false,
-      },
-    });
-
-    console.log('Test påminnelse, du får se om 5 sekunder.');
   }
 }
 
