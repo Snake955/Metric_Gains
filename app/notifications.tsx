@@ -20,6 +20,29 @@ const waterReminders = notifications.filter(n =>
     n.content.title?.includes('💧')
 );
 
+const getCurrentReminder = () => {
+  const currentDay = new Date();
+  const currentStart = new Date(currentDay.getFullYear(), currentDay.getMonth(), currentDay.getDate());
+  const currentEnd = new Date(currentStart);
+  currentEnd.setDate(currentEnd.getDate() + 1);
+
+  return waterReminders.filter(reminder => {
+    if (!reminder.trigger) return false;
+    
+    if (reminder.trigger.type === 'daily') {
+      const currentHour = reminder.trigger.hour || 0;
+      const currentReminder = new Date(currentStart);
+      currentReminder.setHours(currentHour, reminder.trigger.minute || 0);
+      
+      return currentReminder >= currentStart && currentReminder < currentEnd;
+    }
+    
+    return false;
+  });
+};
+
+const currentWaterReminder = getCurrentReminder();
+
 return (
     <SafeAreaView style={styles.screen}>
     <View style={styles.header}>
@@ -27,7 +50,7 @@ return (
     </View>
 
     <ScrollView style={styles.container}>
-        <ThemedText>Water reminders: {waterReminders.length}</ThemedText>
+        <ThemedText>Today's reminders count: {currentWaterReminder.length}</ThemedText>
         </ScrollView>
     </SafeAreaView>
   );
