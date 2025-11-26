@@ -8,6 +8,7 @@ import * as Progress from "react-native-progress";
 import { SafeAreaView } from "react-native-safe-area-context";
 import waterReminderService from '../utils/waterReminderService';
 import { Alert } from 'react-native';
+import { router } from 'expo-router';
 
 import { onAuthStateChanged, User } from "firebase/auth";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
@@ -49,7 +50,11 @@ const [displayName, setDisplayName] = useState<string | null>(null);
           day: "numeric",
           month: "long",})}
           </ThemedText>
+
+        <TouchableOpacity onPress={() => router.push('/notifications')}>
           <IconSymbol name="bell.fill" size={24} color="#3f3f3fff" />
+        </TouchableOpacity>
+
         </View>
         {/* This part will be changed later so that instead of Erik it will take the assigned user's name */}
         <ThemedText type="default">
