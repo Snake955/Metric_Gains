@@ -1,4 +1,4 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 
@@ -8,6 +8,10 @@ export default function NotificationsScreen() {
         <View style={styles.header}>
             <ThemedText type="title">Notifications</ThemedText>
         </View>
+
+        <ScrollView style={styles.container}>
+            <ThemedText>Notifications will be below here.</ThemedText>
+        </ScrollView>
     </SafeAreaView>
   );
 }
@@ -23,5 +27,10 @@ header: {
   marginBottom: 5,
   paddingHorizontal: 5,
   paddingTop: 10,
+},
+
+container: {
+  flex: 1,
+  paddingHorizontal: 5,
 },
 });
