@@ -6,6 +6,8 @@ import React, { useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import * as Progress from "react-native-progress";
 import { SafeAreaView } from "react-native-safe-area-context";
+import waterReminderService from '../utils/waterReminderService';
+import { Alert } from 'react-native';
 
 import { onAuthStateChanged, User } from "firebase/auth";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
@@ -24,6 +26,17 @@ const [displayName, setDisplayName] = useState<string | null>(null);
     });
     return unsubscribe; //removes text if user logs out and into new user 
   }, []);
+
+  const handleStartWaterReminders = async () => {
+  const hasPermission = await waterReminderService.requestPermissions();
+  
+  if (hasPermission) {
+    await waterReminderService.startWaterReminders();
+    Alert.alert('Activated', 'Water reminder has started!');
+  } else {
+    Alert.alert('Permission needed', 'We need you to allow notifications.');
+  }
+};
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -46,6 +59,11 @@ const [displayName, setDisplayName] = useState<string | null>(null);
         <ThemedText style={styles.topbar_index}>
           You are on a <ThemedText type="title" style={styles.blue}>2x week</ThemedText> streak!
         </ThemedText>
+
+      <TouchableOpacity style={styles.waterReminderButton} onPress={handleStartWaterReminders}>
+        <IconSymbol name="drop.fill" size={20} color="#2D7FF9" />
+        <ThemedText style={styles.waterReminderText}>Start water reminder!</ThemedText>
+      </TouchableOpacity>
 
         {/* Activity */}
         <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -210,5 +228,20 @@ spotifyText: {
 spotifyIcon: {
   width: 16,
   height: 16,
+},
+
+waterReminderButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingVertical: 12,
+  paddingHorizontal: 16,
+  borderRadius: 12,
+  marginVertical: 16,
+  gap: 8,
+},
+waterReminderText: {
+  color: '#2D7FF9',
+  fontSize: 16,
+  fontWeight: '600',
 },
 });

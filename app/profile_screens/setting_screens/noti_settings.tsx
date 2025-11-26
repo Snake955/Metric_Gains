@@ -11,7 +11,7 @@ export default function NotiSettings() {
   const router = useRouter();
   const handleCancel = async () => {
     await waterReminderService.cancelAllReminders();
-    Alert.alert('Kansellert', 'Alle vannpåminnelser er stoppet');
+    Alert.alert('Cancelled water reminders', 'All the water reminders has stopped');
   };
 
 
@@ -55,7 +55,7 @@ export default function NotiSettings() {
                   color={isDarkMode ? "#fff" : "#000"}
                 />
                 <TouchableOpacity onPress={handleCancel}>
-                  <Text style={styles.menuText}>Stopp vannpåminnelser</Text>
+                  <Text style={styles.menuText}>Stop water reminders</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
