@@ -192,6 +192,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   gifWrapper: {
     backgroundColor: "#f8f9fa",
@@ -208,6 +211,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   placeholderGif: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
@@ -216,6 +220,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginTop: 12,
+    marginBottom: 4,
   },
   infoSection: {
     marginBottom: 24,
