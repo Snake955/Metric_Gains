@@ -275,6 +275,11 @@ export default function WorkoutMain() {
     }
   };
 
+  function handleJoggingPress() {
+  router.push('/_jogworkout');
+}
+
+
   useEffect(() => {
     if (isWorkoutActive) {
       timerRef.current = setInterval(() => {
@@ -612,15 +617,21 @@ export default function WorkoutMain() {
           </View>
 
           {!isWorkoutActive && (
+            <>
             <Pressable style={styles.buttonStart} onPress={handleStartPress}>
               <Text style={styles.buttonText}>Start workout</Text>
-            </Pressable>
-          )}
-          {isWorkoutActive && (
-            <Pressable style={styles.buttonStop} onPress={handleStopPress}>
-              <Text style={styles.buttonText}>Stopp workout</Text>
-            </Pressable>
-          )}
+              </Pressable>
+              
+              <Pressable style={styles.buttonJogging} onPress={handleJoggingPress}>
+                <Text style={styles.buttonText}>Start jogging</Text>
+                </Pressable>
+                </>
+              )}
+              {isWorkoutActive && (
+                <Pressable style={styles.buttonStop} onPress={handleStopPress}>
+                  <Text style={styles.buttonText}>Stopp workout</Text>
+                  </Pressable>
+                )}
 
           {!isWorkoutActive && lastWorkoutDuration > 0 && (
             <View style={styles.prevWorkoutBox}>
@@ -900,6 +911,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
+  buttonJogging: {
+  backgroundColor: "#2f6cf9",
+  borderRadius: 8,
+  paddingVertical: 12,
+  alignItems: "center",
+  marginTop: 12,
+},
+
   buttonStop: {
     backgroundColor: "#ef4444",
     borderRadius: 8,

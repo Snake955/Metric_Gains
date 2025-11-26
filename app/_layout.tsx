@@ -19,6 +19,8 @@ export default function RootLayout() {
         <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="_jogworkout" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           </Stack>
         </SafeAreaView>

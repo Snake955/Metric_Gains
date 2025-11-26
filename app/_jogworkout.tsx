@@ -1,6 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 import { Pedometer } from 'expo-sensors';
+import { ChevronLeft } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Region } from 'react-native-maps';
@@ -8,6 +10,7 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Region } from 'react-native
 type Coord = { latitude: number; longitude: number; timestamp: number };
 
 export default function JogWorkoutFullScreen() {
+  const router = useRouter();
   const [path, setPath] = useState<Coord[]>([]);
   const [distanceMeters, setDistanceMeters] = useState<number>(0);
   const [steps, setSteps] = useState<number>(0);
@@ -247,7 +250,7 @@ export default function JogWorkoutFullScreen() {
     };
   }, [isRunning, isPaused]);
 
-  function toggleWorkout() {
+  function toggleJogging() {
     if (isRunning) {
       locSubscription.current?.remove();
       pedSub.current?.remove();
@@ -316,6 +319,12 @@ export default function JogWorkoutFullScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            {/* Gradient bak statusbar */}
+      <LinearGradient
+        colors={['#00000066', '#00000000']}
+        style={styles.statusBarBackground}
+      />
+
 
       {initialRegion && (
         <MapView
@@ -342,6 +351,18 @@ export default function JogWorkoutFullScreen() {
         </MapView>
       )}
 
+      {/* Tilbake-knapp */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.back()}
+        activeOpacity={0.8}
+      >
+        <View style={styles.backButtonInner}>
+          <ChevronLeft size={24} color="#111" />
+          <Text style={styles.backButtonText}>Tilbake</Text>
+        </View>
+      </TouchableOpacity>
+
       {showRecenterButton && isRunning && (
         <TouchableOpacity
           style={styles.recenterButton}
@@ -350,7 +371,7 @@ export default function JogWorkoutFullScreen() {
         >
           <View style={[styles.recenterCircle, { transform: [{ rotate: `${compassRotation}deg` }] }]}>
             <Image
-              source={require('../../assets/images/icon.png')}
+              source={require('../assets/images/icon.png')}
               style={styles.logoIcon}
               resizeMode="contain"
             />
@@ -391,10 +412,10 @@ export default function JogWorkoutFullScreen() {
 
       <View style={styles.bottomOverlay}>
         <View style={styles.buttonRow}>
-          <TouchableOpacity onPress={toggleWorkout}>
+          <TouchableOpacity onPress={toggleJogging}>
             <View style={[styles.glassButton, isRunning && styles.glassButtonRed]}>
               <Text style={styles.buttonText}>
-                {isRunning ? 'STOPP WORKOUT' : 'START WORKOUT'}
+                {isRunning ? 'STOPP JOGGING' : 'START JOGGING'}
               </Text>
             </View>
           </TouchableOpacity>
@@ -421,13 +442,48 @@ export default function JogWorkoutFullScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#e5e5e5' },
+    statusBarBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    zIndex: 999,
+  },
   map: { flex: 1 },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    zIndex: 1001,
+  },
+  backButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#00000033',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#0000004d',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
   topOverlay: {
     position: 'absolute',
     top: 0,
     width: '100%',
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 120,
     alignItems: 'center',
   },
   glassCard: {
@@ -452,7 +508,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 16,
     paddingTop: 80,
-    paddingBottom: 120,
+    paddingBottom: 70,
     alignItems: 'center',
   },
   title: {
@@ -485,7 +541,7 @@ const styles = StyleSheet.create({
   },
   topStats: {
     position: 'absolute',
-    top: 230,
+    top: 300,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -494,7 +550,7 @@ const styles = StyleSheet.create({
   },
   bottomStats: {
     position: 'absolute',
-    bottom: 170,
+    bottom: 140,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -629,7 +685,7 @@ const styles = StyleSheet.create({
     borderColor: '#0000004d',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#bdbcbcff',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
