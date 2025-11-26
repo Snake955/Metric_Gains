@@ -713,41 +713,49 @@ export default function WorkoutMain() {
 
                     {isSelected && (
                       <View style={styles.setsRepsContainer}>
-                        <Text style={styles.setsRepsLabel}>Sets:</Text>
-                        <TextInput
-                          style={styles.setsRepsInput}
-                          value={currentSets}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateExerciseSetsReps(item.id, text, currentReps, currentWeight);
-                          }}
-                        />
+                        <View style={styles.inputsRow}>
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.setsRepsLabel}>Sets</Text>
+                            <TextInput
+                              style={styles.setsRepsInput}
+                              value={currentSets}
+                              placeholder="0"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                updateExerciseSetsReps(item.id, text, currentReps, currentWeight);
+                              }}
+                            />
+                          </View>
 
-                        <Text style={styles.setsRepsLabel}>Reps:</Text>
-                        <TextInput
-                          style={styles.setsRepsInput}
-                          value={currentReps}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateExerciseSetsReps(item.id, currentSets, text, currentWeight);
-                          }}
-                        />
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.setsRepsLabel}>Reps</Text>
+                            <TextInput
+                              style={styles.setsRepsInput}
+                              value={currentReps}
+                              placeholder="0"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                updateExerciseSetsReps(item.id, currentSets, text, currentWeight);
+                              }}
+                            />
+                          </View>
 
-                        <Text style={styles.setsRepsLabel}>Weight:</Text>
-                        <TextInput
-                          style={styles.setsRepsInput}
-                          value={currentWeight}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateExerciseSetsReps(item.id, currentSets, currentReps, text);
-                          }}
-                        />
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.setsRepsLabel}>Weight</Text>
+                            <TextInput
+                              style={styles.setsRepsInput}
+                              value={currentWeight}
+                              placeholder="0"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                updateExerciseSetsReps(item.id, currentSets, currentReps, text);
+                              }}
+                            />
+                          </View>
+                        </View>
                       </View>
                     )}
                   </View>
@@ -993,25 +1001,33 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   setsRepsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
     padding: 12,
     backgroundColor: "#333",
     borderTopWidth: 1,
     borderTopColor: "#444",
   },
+  inputsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  inputGroup: {
+    alignItems: "center",
+    flex: 1,
+  },
   setsRepsLabel: {
     color: "#fff",
     fontSize: 14,
-    marginRight: 8,
-    marginLeft: 12,
+    marginBottom: 6,
+    textAlign: "center",
+    width: "100%",
   },
   setsRepsInput: {
     backgroundColor: "#111",
     color: "#fff",
     padding: 8,
     borderRadius: 4,
-    width: 50,
+    width: 60,
     textAlign: "center",
   },
   saveWorkoutButton: {
