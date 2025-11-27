@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authorize, refresh } from 'react-native-app-auth';
 
-const Config = {
-  clientId: 'e716b7afacd54a93940cb4c88f6bafd8',
-  clientSecret: '781319718e014ebfa27d7370a4efb939',
+export const spotifyConfig = {
+  clientId: process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID || '',
+  clientSecret: process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET || '',
   redirectUrl: 'exp://192.168.0.84:8081',
   scopes: [ 'user-read-email',
     'playlist-read-private',
@@ -19,7 +19,7 @@ const Config = {
 
 export async function loginToSpotify() {
     try {
-        const result = await authorize(Config);
+        const result = await authorize(spotifyConfig);
         await AsyncStorage.setItem('spotifyAccessToken', result.accessToken);
         await AsyncStorage.setItem('spotifyRefreshToken', result.refreshToken || '');
 
@@ -41,7 +41,7 @@ export async function refreshSpotifyToken() {
   if (!refreshToken) return null;
 
   try {
-    const result = await refresh(Config, { refreshToken });
+    const result = await refresh(spotifyConfig, { refreshToken });
     await AsyncStorage.setItem('spotifyAccessToken', result.accessToken);
     console.log('Token refreshed');
     return result;
