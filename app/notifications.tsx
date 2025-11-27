@@ -3,6 +3,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { useState, useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
+import { ThemedView } from '@/components/themed-view';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function NotificationsScreen() {
 
@@ -14,6 +16,8 @@ useEffect(() => {
         setNotifications(reminder);
     };
     getNotifications();
+    const interval = setInterval(getNotifications, 60000);
+    return () => clearInterval(interval);
 }, []);
 
 const waterReminders = notifications.filter(n => 
@@ -21,24 +25,33 @@ const waterReminders = notifications.filter(n =>
 );
 
 const getCurrentReminder = () => {
-  const currentDay = new Date();
-  const currentStart = new Date(currentDay.getFullYear(), currentDay.getMonth(), currentDay.getDate());
-  const currentEnd = new Date(currentStart);
-  currentEnd.setDate(currentEnd.getDate() + 1);
+    const currentDay = new Date();
+    const currentHour = currentDay.getHours();
+    const currentMinute = currentDay.getMinutes();
 
-  return waterReminders.filter(reminder => {
-    if (!reminder.trigger) return false;
+    return waterReminders.filter(reminder => {
+        if (!reminder.trigger || !reminder.trigger.dateComponents) return false;
     
-    if (reminder.trigger.type === 'daily') {
-      const currentHour = reminder.trigger.hour || 0;
-      const currentReminder = new Date(currentStart);
-      currentReminder.setHours(currentHour, reminder.trigger.minute || 0);
-      
-      return currentReminder >= currentStart && currentReminder < currentEnd;
-    }
+        const triggerHour = reminder.trigger.dateComponents.hour ?? 0;
+        const triggerMinute = reminder.trigger.dateComponents.minute ?? 0;
     
-    return false;
-  });
+        if (triggerHour < currentHour) {
+            return true;
+        } else if (triggerHour === currentHour && triggerMinute <= currentMinute) {
+            return true;
+        }
+    
+        return false;
+    });
+};
+
+const currentKlokke = (trigger: any) => {
+  if (!trigger || !trigger.dateComponents) return 'Ukjent tid';
+  
+  const hour = trigger.dateComponents.hour ?? 0;
+  const minute = trigger.dateComponents.minute ?? 0;
+  
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 };
 
 const currentWaterReminder = getCurrentReminder();
@@ -46,12 +59,33 @@ const currentWaterReminder = getCurrentReminder();
 return (
     <SafeAreaView style={styles.screen}>
     <View style={styles.header}>
-        <ThemedText type="title">Notifications</ThemedText>
+        <ThemedText style={styles.centerTitle} type="title">Notifications</ThemedText>
     </View>
 
     <ScrollView style={styles.container}>
-        <ThemedText>Today's reminders count: {currentWaterReminder.length}</ThemedText>
-        </ScrollView>
+        {currentWaterReminder.length > 0 && (
+    <View style={styles.section}>
+
+    <ThemedText style={styles.sectionTitle} type="subtitle">💧Today's Water Reminders</ThemedText>
+
+    {currentWaterReminder.map((varsel) => (
+      <ThemedView key={varsel.identifier} style={styles.notifsCard}>
+
+        <View style={styles.notifsRow}>
+          <IconSymbol name="drop.fill" size={20} color="#2D7FF9" />
+          <ThemedText type="defaultSemiBold">
+            {varsel.content.title}
+          </ThemedText>
+        </View>
+
+        <ThemedText style={styles.timer}>
+          {currentKlokke(varsel.trigger)}
+        </ThemedText>
+        </ThemedView>
+        ))}
+    </View>
+    )}
+    </ScrollView>
     </SafeAreaView>
   );
 }
@@ -72,5 +106,31 @@ header: {
 container: {
   flex: 1,
   paddingHorizontal: 5,
+},
+
+section: {
+  paddingHorizontal: 15,
+},
+sectionTitle: {
+  marginVertical: 15,
+},
+notifsCard: {
+  padding: 15,
+  margin: 5,
+  borderRadius: 12,
+},
+notifsRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+  marginBottom: 5,
+},
+timer: {
+  color: "#888",
+  fontSize: 12,
+},
+centerTitle: {
+  textAlign: 'center',
+  flex: 1,
 },
 });
