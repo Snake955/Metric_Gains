@@ -1,17 +1,136 @@
 import UpperBody from "@/assets/images/UpperbodyIcon.png";
 import { Colors } from '@/constants/theme';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from "@react-native-picker/picker";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CalendarProvider, WeekCalendar } from 'react-native-calendars';
 import { SafeAreaView } from "react-native-safe-area-context";
+
+type Workout = {
+  id: string;
+  name: string;
+  exercises: any[];
+  userId?: string;
+  createdAt?: string;
+};
+
+type PlannedWorkout = {
+  id: string;
+  userId: string;
+  workoutId: string;
+  workoutName: string | null;
+  date: string;      // "YYYY-MM-DD"
+  startTime: string; // "HH:MM"
+  endTime: string;   // "HH:MM"
+  createdAt: string;
+};
 
 export default function CalendarScreen() {
   const colorScheme = useColorScheme();
   const tint = Colors[colorScheme ?? 'light'].tint;
   const today = new Date().toISOString().slice(0, 10);
   const [selected, setSelected] = useState<string>(today);
+  const [plannedDate, setPlannedDate] = useState<Date>(new Date());
+  const [plannedWorkouts, setPlannedWorkouts] = useState<PlannedWorkout[]>([]);
+
+  const [startTime, setStartTime] = useState<Date>(() => {
+  const d = new Date();
+    d.setHours(10, 0, 0, 0);    // 10:00
+    return d;
+  });
+
+  const [endTime, setEndTime] = useState<Date>(() => {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);    // 12:00
+    return d;
+  });
+
+  const [user, setUser] = useState<User | null>(null);
+  const [userWorkouts, setUserWorkouts] = useState<Workout[]>([]);
+
+  const DEFAULT_WORKOUT = [
+    {
+      id: "jog",
+      name: "Joggetur",
+      exercises: [],
+    }
+  ];
+
+  const allWorkouts = [...DEFAULT_WORKOUT, ...userWorkouts];
+
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string>(
+    allWorkouts.length > 0 ? String(allWorkouts[0].id) : ""
+  );
+
+  const sheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ['75%'], []);
+
+  const openSheet = useCallback(() => {
+    setPlannedDate(new Date(selected));
+    sheetRef.current?.present();
+  }, [selected]);
+  const closeSheet = useCallback(() => sheetRef.current?.dismiss(), []);
+
+  function formatTime(date: Date): string {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const hh = hours < 10 ? `0${hours}` : `${hours}`;
+    const mm = minutes < 10 ? `0${minutes}` : `${minutes}`;
+    return `${hh}:${mm}`;
+  }
+
+  const onAdd = useCallback(async () => {
+    if (!user) {
+      alert("Du må være innlogget for å planlegge en økt");
+      return;
+    }
+
+    if (!selectedWorkoutId) {
+      alert("Velg en workout før du legger til");
+      return;
+    }
+
+    const dateString = plannedDate.toISOString().slice(0, 10);
+    const startTimeString = formatTime(startTime);
+    const endTimeString = formatTime(endTime);
+
+    const selectedWorkout = allWorkouts.find((w) => w.id === selectedWorkoutId);
+
+    const plannedWorkout = {
+      userId: user.uid,
+      workoutId: selectedWorkoutId,
+      workoutName: selectedWorkout?.name ?? null,
+      date: dateString,
+      startTime: startTimeString,
+      endTime: endTimeString,
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log("Planlagt økt:", plannedWorkout);
+
+    try {
+      const docRef = await addDoc(collection(FIRESTORE_DB, "planned_workouts"), plannedWorkout);
+      console.log("Planned workout saved with ID:", docRef.id);
+
+      setPlannedWorkouts((prev) => [
+        ...prev,
+        { id: docRef.id, ...plannedWorkout },
+      ]);
+
+      closeSheet(); // lukk etter “legg til”
+    } catch (error) {
+      console.error("Error saving planned workout:", error);
+      alert("Kunne ikke lagre planlagt økt. Prøv igjen.");
+    }
+  }, [closeSheet, plannedDate, selectedWorkoutId, startTime, endTime, user, allWorkouts]);
+
 
   const [visibleMonth, setVisibleMonth] = useState<{year: number; month: number}>({
     year: new Date().getFullYear(),
@@ -22,12 +141,74 @@ export default function CalendarScreen() {
     return new Date(year, month - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
   }
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      setUser(user);
+      if (user) {
+        loadUserWorkouts(user.uid);
+        loadPlannedWorkouts(user.uid);
+      } else {
+        setUserWorkouts([]);
+        setPlannedWorkouts([]);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const loadUserWorkouts = async (userId: string) => {
+    try {
+      const workoutsQuery = query(
+        collection(FIRESTORE_DB, 'user_workouts'),
+        where('userId', '==', userId)
+      );
+
+      const querySnapshot = await getDocs(workoutsQuery);
+      const workouts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Workout[];
+
+      setUserWorkouts(workouts);
+    } catch (error) {
+      console.error("Error loading user workouts:", error);
+    }
+  };
+
+  const loadPlannedWorkouts = async (userId: string) => {
+    try {
+      const plannedQuery = query(
+        collection(FIRESTORE_DB, 'planned_workouts'),
+        where('userId', '==', userId)
+      );
+
+      const querySnapshot = await getDocs(plannedQuery);
+      const items = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as PlannedWorkout[];
+
+      setPlannedWorkouts(items);
+    } catch (error) {
+      console.error("Error loading planned workouts:", error);
+    }
+  };
+
+  //const plannedForSelected = plannedWorkouts.find(
+    //(pw) => pw.date === selected
+  //);
+
+  const plannedForSelected = plannedWorkouts
+    .filter((pw) => pw.date === selected)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Calendar</Text>
-          <TouchableOpacity style={styles.addButton} onPress={() => {}}>
+          <TouchableOpacity style={styles.addButton} onPress={openSheet}>
             <Ionicons name="add" size={28} color={"#000000ff"} />
           </TouchableOpacity>
         </View>
@@ -57,6 +238,10 @@ export default function CalendarScreen() {
                 const isToday = date?.dateString === today;
                 const isSelected = date?.dateString === selected;
 
+                const hasPlanned = plannedWorkouts.some(
+                  (pw) => pw.date === date?.dateString
+                );
+
                 return (
                   <TouchableOpacity
                     onPress={() => date?.dateString && setSelected(date.dateString)}
@@ -68,31 +253,35 @@ export default function CalendarScreen() {
                       paddingVertical: 6,
                     }}
                   >
-                    <View
-                      style={[
-                        {
-                          minWidth: 32,
-                          minHeight: 32,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: 16,
-                        },
-                        isSelected && {
-                          backgroundColor: "#ffffff", // fylt hvit sirkel for valgt dag
-                        },
-                      ]}
-                    >
-                      <Text
-                        allowFontScaling={false}
-                        style={{
-                          textAlign: "center",
-                          includeFontPadding: false,
-                          color: isToday ? tint : "#000000ff", // blå tekst for dagens dato
-                          opacity: state === "disabled" ? 0.4 : 1,
-                        }}
+                    <View style={{ alignItems: "center" }}>
+                      <View
+                        style={[
+                          {
+                            minWidth: 32,
+                            minHeight: 32,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 16,
+                          },
+                          isSelected && {
+                            backgroundColor: "#ffffff", // fylt hvit sirkel for valgt dag
+                          },
+                        ]}
                       >
-                        {date?.day ?? ""}
-                      </Text>
+                        <Text
+                          allowFontScaling={false}
+                          style={{
+                            textAlign: "center",
+                            includeFontPadding: false,
+                            color: isToday ? tint : "#000000ff", // blå tekst for dagens dato
+                            opacity: state === "disabled" ? 0.4 : 1,
+                          }}
+                        >
+                          {date?.day ?? ""}
+                        </Text>
+                      </View>
+                      {/* liten prikk under datoen hvis det finnes planlagt økt */}
+                      {hasPlanned && <View style={styles.dotIndicator} />}
                     </View>
                   </TouchableOpacity>
                 );
@@ -107,22 +296,41 @@ export default function CalendarScreen() {
 
         <Text style={styles.sectionTitle}>My workouts</Text>
         <View style={styles.body}>
-          <View style={styles.card}>
-            <View style={styles.cardLeftContent}>
-              <Text style={styles.cardTitle}>Strength</Text>
-              <Text style={styles.cardTime}>10:00 - 14:00</Text>
-              <Text>    </Text>
-              <Text style={styles.cardText}>Focus: Upper Body</Text>
-              <Text style={styles.cardText}>Exercises: 8</Text>
+          {plannedForSelected.length === 0 ? (
+            <View style={styles.card}>
+              <View style={styles.cardLeftContent}>
+                <Text style={styles.cardTitle}>Ingen planlagt økt</Text>
+                <Text style={styles.cardText}>
+                  Trykk på + for å planlegge en økt for denne dagen.
+                </Text>
+              </View>
             </View>
+          ) : (
+            plannedForSelected.map((pw) => (
+              <View key={pw.id} style={styles.card}>
+                <View style={styles.cardLeftContent}>
+                  <Text style={styles.cardTitle}>
+                    {pw.workoutName || "Planlagt økt"}
+                  </Text>
+                  <Text style={styles.cardTime}>
+                    {pw.startTime} - {pw.endTime}
+                  </Text>
+                  <Text style={styles.cardText}>Dato: {pw.date}</Text>
+                </View>
 
-            <View style={styles.cardRightContent}>
-              <Image source={UpperBody} style={styles.UpperBodyIcon} resizeMode="contain" />
-              <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9"}]}>
-                <Text style={styles.btnText}>Change</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                <View style={styles.cardRightContent}>
+                  <Image
+                    source={UpperBody}
+                    style={styles.UpperBodyIcon}
+                    resizeMode="contain"
+                  />
+                  <TouchableOpacity style={[styles.btn, { backgroundColor: "#2f6cf9" }]}>
+                    <Text style={styles.btnText}>Change</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))
+          )}
         </View>
 
         <Text style={styles.sectionTitle}>Friend workouts</Text>
@@ -140,6 +348,95 @@ export default function CalendarScreen() {
           </View>
         </View>
       </ScrollView>
+      <BottomSheetModal 
+        ref={sheetRef}
+        snapPoints={snapPoints}
+        index={0} // bruker første index i snappointsa våre (akkurat nå har vi bare ett uansett)
+        enableDynamicSizing={false} // tvinger at den bruker snappointsa våre og ikke egne dynamiske snappoints
+        enablePanDownToClose
+        backdropComponent={({ style }) => (
+          <View style={[style, { backgroundColor: 'rgba(0,0,0,0.25)' }]} /> // litt grå bakgrunn når man har modulen aktiv
+        )}
+      >
+        <BottomSheetView style={{ padding: 16 }}>
+          {/* header */}
+          <View style={styles.sheetHeader}>
+            <TouchableOpacity onPress={closeSheet} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={styles.sheetBtnText}>Avbryt</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.sheetTitle}>Planlegg ny økt</Text>
+
+            <TouchableOpacity onPress={onAdd} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={[styles.sheetBtnText, styles.sheetPrimary]}>Legg til</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* tynn skillelinje */}
+          <View style={styles.sheetDivider} />
+
+          {/* body */}
+          <View style={{ gap: 12 }}>
+            {/* dato picker */}
+            <View style={styles.timeRow}>
+              <View style={styles.timeField}>
+                <Text style={styles.timeLabel}>Dato</Text>
+                <DateTimePicker
+                  value={plannedDate}
+                  mode="date"
+                  display="compact"
+                  onChange={(event, date) => {
+                    if (date) setPlannedDate(date);
+                  }}
+                />
+              </View>
+            </View>
+
+            {/* tids picker */}
+            <View style={styles.timeRow}>
+              <View style={styles.timeField}>
+                <Text style={styles.timeLabel}>Start</Text>
+                <DateTimePicker
+                  value={startTime}
+                  mode="time"
+                  display="compact"
+                  onChange={(event, date) => {
+                    if (date) setStartTime(date);
+                  }}
+                />
+              </View>
+
+              <View style={styles.timeField}>
+                <Text style={styles.timeLabel}>Slutt</Text>
+                <DateTimePicker
+                  value={endTime}
+                  mode="time"
+                  display="compact"
+                  onChange={(event, date) => {
+                    if (date) setEndTime(date);
+                  }}
+                />
+              </View>
+            </View>
+
+
+            {/* workout picker */}
+            <View style={styles.pickerWrapper}>
+              <Text style={styles.pickerLabel}>Velg workout:</Text>
+              <Picker
+                selectedValue={selectedWorkoutId}
+                onValueChange={(value) => setSelectedWorkoutId(String(value))}
+                style={styles.picker}
+              >
+                {allWorkouts.map((w) => (
+                  <Picker.Item key={w.id} label={w.name} value={w.id} />
+                ))}
+              </Picker>
+            </View>
+          </View>
+        </BottomSheetView>
+      </BottomSheetModal>
+
     </SafeAreaView>
   );
 }
@@ -281,5 +578,77 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     marginLeft: 10,
+  },
+
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+
+  sheetBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  sheetPrimary: {
+    color: '#2f6cf9',
+  },
+
+  sheetDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#e6e6e6',
+    marginBottom: 12,
+  },
+
+  pickerWrapper: {
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#d4d4d4",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111",
+    padding: 12
+  },
+
+  picker: {
+    width: "100%"
+  },
+
+  timeRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 8,
+  },
+
+  timeField: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  timeLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111",
+    marginBottom: 4,
+  },
+
+  dotIndicator: {
+    marginTop: -2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#2f6cf9",
   }
 });

@@ -2,10 +2,13 @@ import SpotifyLogo from "@/assets/images/spotify-blue.png";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
 import * as Progress from "react-native-progress";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getCurrentlyPlaying, getStoredSpotifyToken, pausePlayback, playTrack, resumePlayback, skipToNext, skipToPrevious } from "../utils/spotifyAuth";
+
 import waterReminderService from '../utils/waterReminderService';
 import { router } from 'expo-router';
 
@@ -14,6 +17,34 @@ import { FIREBASE_AUTH } from "../../FirebaseConfig";
 
 export default function HomeScreen() {
 const [displayName, setDisplayName] = useState<string | null>(null);
+  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const isUpdatingRef = useRef(false);
+
+const initSpotify = useCallback(async () => {
+  const token = await getStoredSpotifyToken();
+  setSpotifyToken(token);
+
+  if (token) {
+    const track = await getCurrentlyPlaying(token);
+    if (track) {
+      setCurrentTrack(track);
+      setIsPlaying(track.is_playing);
+    } else {
+      await playTrack(token);
+      setTimeout(async () => {
+        const newTrack = await getCurrentlyPlaying(token);
+        if (newTrack) {
+          setCurrentTrack(newTrack);
+          setIsPlaying(newTrack.is_playing);
+        }
+      }, 1000);
+    }
+  }
+}, []);
+
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (user: User | null) => {
@@ -26,17 +57,6 @@ const [displayName, setDisplayName] = useState<string | null>(null);
     });
     return unsubscribe; //removes text if user logs out and into new user 
   }, []);
-
-  const handleStartWaterReminders = async () => {
-  const hasPermission = await waterReminderService.requestPermissions();
-  
-  if (hasPermission) {
-    await waterReminderService.startWaterReminders();
-    Alert.alert('Activated', 'Water reminder has started!');
-  } else {
-    Alert.alert('Permission needed', 'We need you to allow notifications.');
-  }
-};
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -63,11 +83,6 @@ const [displayName, setDisplayName] = useState<string | null>(null);
         <ThemedText style={styles.topbar_index}>
           You are on a <ThemedText type="title" style={styles.blue}>2x week</ThemedText> streak!
         </ThemedText>
-
-      <TouchableOpacity style={styles.waterReminderButton} onPress={handleStartWaterReminders}>
-        <IconSymbol name="drop.fill" size={20} color="#2D7FF9" />
-        <ThemedText style={styles.waterReminderText}>Start water reminder!</ThemedText>
-      </TouchableOpacity>
 
         {/* Activity */}
         <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -113,35 +128,74 @@ const [displayName, setDisplayName] = useState<string | null>(null);
             <ThemedText>Exercises: 8</ThemedText>
             <ThemedText>Focus: Upper body</ThemedText>
           </ThemedView>
-
-          {/* Music API 
-          Denne blir fjernet senere for at vi skal ha den som en widget og ikke bare fast på en side
-          */}
-          <ThemedView style={styles.musicControls}>
-            <TouchableOpacity>
-              <IconSymbol name="shuffle" size={26} color="#888" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <IconSymbol name="chevron.left" size={26} color="#888" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <IconSymbol name="play.circle.fill" size={42} color="#888" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <IconSymbol name="chevron.right" size={26} color="#888" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <IconSymbol name="repeat" size={26} color="#888" />
-            </TouchableOpacity>
-          </ThemedView>
-          <View style={styles.spotifyRow}>
-            <ThemedText style={styles.spotifyText}>Spotify®</ThemedText>
-            <Image source={SpotifyLogo} style={styles.spotifyIcon} resizeMode="contain" />
-          </View>
         </View>
+      {/* Music Player */}
+      {spotifyToken && currentTrack ? (
+        <ThemedView style={styles.playerCard}>
+          {currentTrack.item?.album?.images?.[0]?.url && (
+            <View style={styles.albumContainer}>
+              <Image
+                source={{ uri: currentTrack.item.album.images[0].url }}
+                style={styles.albumArt}
+              />
+              <ThemedText type="defaultSemiBold" style={styles.trackName}>
+                {currentTrack.item?.name || "No track"}
+              </ThemedText>
+              <ThemedText style={styles.artistName}>
+                {currentTrack.item?.artists?.[0]?.name || "Unknown"}
+              </ThemedText>
+            </View>
+          )}
 
-      </ScrollView>
-    </SafeAreaView>
+          <View style={styles.musicControls}>
+            <TouchableOpacity
+              onPress={handleSkipPrevious}
+              style={styles.controlButton}
+              activeOpacity={0.7}
+            >
+              <IconSymbol name="backward.fill" size={32} color="#2D7FF9" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handlePlayPause}
+              style={styles.playButton}
+              activeOpacity={0.7}
+            >
+              <IconSymbol
+                name={isPlaying ? "pause.circle.fill" : "play.circle.fill"}
+                size={72}
+                color="#2D7FF9"
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleSkipNext}
+              style={styles.controlButton}
+              activeOpacity={0.7}
+            >
+              <IconSymbol name="forward.fill" size={32} color="#2D7FF9" />
+            </TouchableOpacity>
+          </View>
+        </ThemedView>
+      ) : (
+        <View style={styles.placeholderContainer}>
+          <ThemedText style={styles.placeholderText}>
+            Connect Spotify in Settings
+          </ThemedText>
+        </View>
+      )}
+
+      {/* Spotify Branding */}
+      <View style={styles.spotifyRow}>
+        <ThemedText style={styles.spotifyText}>Spotify®</ThemedText>
+        <Image
+          source={SpotifyLogo}
+          style={styles.spotifyIcon}
+          resizeMode="contain"
+        />
+      </View>
+    </ScrollView>
+  </SafeAreaView>
   );
 }
 
@@ -155,10 +209,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingTop: 10,
   },
-
   greyDate: {
     color: "#888",
-    fontSize:10,
+    fontSize: 10,
   },
 
   header: {
@@ -172,12 +225,11 @@ const styles = StyleSheet.create({
   },
 
   topbar_index: {
-    fontSize:22,
-    paddingTop:10,
+    fontSize: 22,
+    paddingTop: 10,
     justifyContent: "center",
     alignItems: "center",
     textAlign: "center",
-
   },
   blue: {
     color: "#2D7FF9",
@@ -208,13 +260,57 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
   },
+  playerCard: {
+    padding: 20,
+    marginVertical: 20,
+    borderRadius: 16,
+    alignItems: "center",
+  },
+  albumContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  albumArt: {
+    width: 220,
+    height: 220,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  trackName: {
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  artistName: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
+  },
   musicControls: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "center",
     alignItems: "center",
-    marginVertical: 15,
-    borderRadius: 12,
-
+    gap: 40,
+    marginTop: 10,
+  },
+  controlButton: {
+    padding: 12,
+    backgroundColor: "rgba(45, 127, 249, 0.1)",
+    borderRadius: 50,
+  },
+  playButton: {
+    padding: 8,
+  },
+  placeholderContainer: {
+    padding: 30,
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  placeholderText: {
+    textAlign: "center",
+    fontSize: 14,
+    color: "#000000ff",
   },
  spotifyRow: {
   flexDirection: "row",
@@ -232,20 +328,5 @@ spotifyText: {
 spotifyIcon: {
   width: 16,
   height: 16,
-},
-
-waterReminderButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingVertical: 12,
-  paddingHorizontal: 16,
-  borderRadius: 12,
-  marginVertical: 16,
-  gap: 8,
-},
-waterReminderText: {
-  color: '#2D7FF9',
-  fontSize: 16,
-  fontWeight: '600',
 },
 });

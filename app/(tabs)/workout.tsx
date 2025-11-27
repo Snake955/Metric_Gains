@@ -1,7 +1,9 @@
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { Picker } from "@react-native-picker/picker";
+import { useRouter } from 'expo-router';
 import { onAuthStateChanged, User } from "firebase/auth";
 import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { Info } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from "react";
 import { Button, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,7 +15,11 @@ type Exercise = {
   sets?: number | string;
   reps?: number | string;
   weight?: string;
-  complete?: boolean
+  complete?: boolean;
+  gifUrl?: string;
+  instructions?: string;
+  equipment?: string;
+  difficulty?: string;
 };
 
 type Workout = {
@@ -51,6 +57,7 @@ const DEFAULT_WORKOUT = [
 ];
 
 export default function WorkoutMain() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [timeCount, setTimeCount] = useState(0);
@@ -117,6 +124,10 @@ export default function WorkoutMain() {
           name: doc.data().name || doc.id,
           muscle_group: doc.data().muscle_group,
           weight: doc.data().weight || "-",
+          gifUrl: doc.data().gifUrl || "",
+          instructions: doc.data().instructions || "",
+          equipment: doc.data().equipment || "Bodyweight / Weights",
+          difficulty: doc.data().difficulty || "Intermediate",
         }));
         setExercises(data);
       } catch (error) {
@@ -128,6 +139,23 @@ export default function WorkoutMain() {
 
     fetchExercises();
   }, []);
+
+  const handleInfoPress = (exercise: Exercise) => {
+    const encodedGifUrl = exercise.gifUrl ? encodeURI(exercise.gifUrl) : '';
+
+    router.push({
+      pathname: '/modal',
+      params: {
+        id: exercise.id,
+        name: exercise.name,
+        muscle_group: exercise.muscle_group || '',
+        gifUrl: encodedGifUrl,
+        instructions: exercise.instructions || '',
+        equipment: exercise.equipment || '',
+        difficulty: exercise.difficulty || '',
+      },
+    });
+  };
 
   function handleStartPress() {
     if (!user) {
@@ -247,6 +275,11 @@ export default function WorkoutMain() {
     }
   };
 
+  function handleJoggingPress() {
+  router.push('/_jogworkout');
+}
+
+
   useEffect(() => {
     if (isWorkoutActive) {
       timerRef.current = setInterval(() => {
@@ -316,22 +349,34 @@ export default function WorkoutMain() {
       return;
     }
 
-    const exercisesWithSetsReps = selectedExercises.map(exercise => ({
-      ...exercise,
-      sets: exerciseSets[exercise.id]?.sets || "",
-      reps: exerciseSets[exercise.id]?.reps || "",
-      weight: exerciseSets[exercise.id]?.weight || "",
-    }));
+    const exercisesWithSetsReps = selectedExercises.map(exercise => {
+      const sets = exerciseSets[exercise.id]?.sets || "0";
+      const reps = exerciseSets[exercise.id]?.reps || "0";
+      const weight = exerciseSets[exercise.id]?.weight || "0";
+
+      return {
+        id: String(exercise.id),
+        name: String(exercise.name || ""),
+        muscle_group: String(exercise.muscle_group || ""),
+        sets: String(sets),
+        reps: String(reps),
+        weight: String(weight),
+      };
+    });
 
     const workoutName = customWorkoutName.trim() || `Custom Workout ${userWorkouts.length + 1}`;
 
     try {
-      const docRef = await addDoc(collection(FIRESTORE_DB, 'user_workouts'), {
-        name: workoutName,
+      const workoutData = {
+        name: String(workoutName),
         exercises: exercisesWithSetsReps,
-        userId: user.uid,
+        userId: String(user.uid),
         createdAt: new Date().toISOString(),
-      });
+      };
+
+      console.log("Final workout data to save:", workoutData);
+
+      const docRef = await addDoc(collection(FIRESTORE_DB, 'user_workouts'), workoutData);
 
       const newWorkout = {
         id: docRef.id,
@@ -349,7 +394,15 @@ export default function WorkoutMain() {
       console.log("Workout saved to Firestore with ID:", docRef.id);
     } catch (error) {
       console.error('Error saving workout to Firestore:', error);
-      alert('Failed to save workout. Please try again.');
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        const firebaseError = error as any;
+        console.error('Firebase error code:', firebaseError.code);
+        console.error('Firebase error details:', firebaseError.details);
+        alert(`Failed to save workout: ${error.message}`);
+      } else {
+        alert('Failed to save workout. Please try again.');
+      }
     }
   };
 
@@ -453,10 +506,20 @@ export default function WorkoutMain() {
                   return (
                     <View key={ex.id} style={styles.activeExerciseContainer}>
                       <View style={styles.exerciseRow}>
-                        <Text style={styles.exerciseName}>{ex.name}</Text>
-                        <Text style={styles.exerciseDetail}>
-                          {ex.muscle_group && ex.muscle_group}
-                        </Text>
+                        <View style={styles.exerciseInfo}>
+                          <Text style={styles.exerciseName}>{ex.name}</Text>
+                          <Text style={styles.exerciseDetail}>
+                            {ex.muscle_group && ex.muscle_group}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.infoButton}
+                          onPress={() => handleInfoPress(ex)}
+                        >
+                          <Info color="#111" size={20} />
+                        </TouchableOpacity>
+
                       </View>
                       <View style={styles.setsRepsLabel}>
                         <View style={styles.setsHeader}>
@@ -554,15 +617,21 @@ export default function WorkoutMain() {
           </View>
 
           {!isWorkoutActive && (
+            <>
             <Pressable style={styles.buttonStart} onPress={handleStartPress}>
               <Text style={styles.buttonText}>Start workout</Text>
-            </Pressable>
-          )}
-          {isWorkoutActive && (
-            <Pressable style={styles.buttonStop} onPress={handleStopPress}>
-              <Text style={styles.buttonText}>Stopp workout</Text>
-            </Pressable>
-          )}
+              </Pressable>
+              
+              <Pressable style={styles.buttonJogging} onPress={handleJoggingPress}>
+                <Text style={styles.buttonText}>Start jogging</Text>
+                </Pressable>
+                </>
+              )}
+              {isWorkoutActive && (
+                <Pressable style={styles.buttonStop} onPress={handleStopPress}>
+                  <Text style={styles.buttonText}>Stopp workout</Text>
+                  </Pressable>
+                )}
 
           {!isWorkoutActive && lastWorkoutDuration > 0 && (
             <View style={styles.prevWorkoutBox}>
@@ -637,48 +706,67 @@ export default function WorkoutMain() {
                           {item.weight && "-" + (item.weight)}
                         </Text>
                       </View>
-                      <Text style={styles.modalExerciseText}>
-                        {isSelected ? '' : ''}
-                      </Text>
+
+                      <View style={styles.exerciseActions}>
+                        <TouchableOpacity
+                          style={styles.infoButton}
+                          onPress={() => handleInfoPress(item)}
+                        >
+                          <Info size={20} color="#fff" />
+                        </TouchableOpacity>
+
+
+                        <Text style={styles.modalExerciseText}>
+                          {isSelected ? '' : ''}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
 
                     {isSelected && (
                       <View style={styles.setsRepsContainer}>
-                        <Text style={styles.setsRepsLabel}>Sets:</Text>
-                        <TextInput
-                          style={styles.setsRepsInput}
-                          value={currentSets}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateExerciseSetsReps(item.id, text, currentReps, currentWeight);
-                          }}
-                        />
+                        <View style={styles.inputsRow}>
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.setsRepsLabel}>Sets</Text>
+                            <TextInput
+                              style={styles.setsRepsInput}
+                              value={currentSets}
+                              placeholder="0"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                updateExerciseSetsReps(item.id, text, currentReps, currentWeight);
+                              }}
+                            />
+                          </View>
 
-                        <Text style={styles.setsRepsLabel}>Reps:</Text>
-                        <TextInput
-                          style={styles.setsRepsInput}
-                          value={currentReps}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateExerciseSetsReps(item.id, currentSets, text, currentWeight);
-                          }}
-                        />
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.setsRepsLabel}>Reps</Text>
+                            <TextInput
+                              style={styles.setsRepsInput}
+                              value={currentReps}
+                              placeholder="0"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                updateExerciseSetsReps(item.id, currentSets, text, currentWeight);
+                              }}
+                            />
+                          </View>
 
-                        <Text style={styles.setsRepsLabel}>Weight:</Text>
-                        <TextInput
-                          style={styles.setsRepsInput}
-                          value={currentWeight}
-                          placeholder="0"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          onChangeText={(text) => {
-                            updateExerciseSetsReps(item.id, currentSets, currentReps, text);
-                          }}
-                        />
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.setsRepsLabel}>Weight</Text>
+                            <TextInput
+                              style={styles.setsRepsInput}
+                              value={currentWeight}
+                              placeholder="0"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                updateExerciseSetsReps(item.id, currentSets, currentReps, text);
+                              }}
+                            />
+                          </View>
+                        </View>
                       </View>
                     )}
                   </View>
@@ -823,6 +911,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
+  buttonJogging: {
+  backgroundColor: "#2f6cf9",
+  borderRadius: 8,
+  paddingVertical: 12,
+  alignItems: "center",
+  marginTop: 12,
+},
+
   buttonStop: {
     backgroundColor: "#ef4444",
     borderRadius: 8,
@@ -886,6 +982,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 12,
   },
+  exerciseInfo: {
+    flex: 1,
+  },
   exerciseName: {
     fontSize: 14,
     fontWeight: "500",
@@ -921,25 +1020,33 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   setsRepsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
     padding: 12,
     backgroundColor: "#333",
     borderTopWidth: 1,
     borderTopColor: "#444",
   },
+  inputsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  inputGroup: {
+    alignItems: "center",
+    flex: 1,
+  },
   setsRepsLabel: {
     color: "#fff",
     fontSize: 14,
-    marginRight: 8,
-    marginLeft: 12,
+    marginBottom: 6,
+    textAlign: "center",
+    width: "100%",
   },
   setsRepsInput: {
     backgroundColor: "#111",
     color: "#fff",
     padding: 8,
     borderRadius: 4,
-    width: 50,
+    width: 60,
     textAlign: "center",
   },
   saveWorkoutButton: {
@@ -1053,5 +1160,16 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 14,
+  },
+  exerciseActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  infoButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  infoButtonText: {
+    fontSize: 18,
   },
 });
