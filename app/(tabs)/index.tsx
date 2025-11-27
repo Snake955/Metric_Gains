@@ -58,6 +58,119 @@ const initSpotify = useCallback(async () => {
     return unsubscribe; //removes text if user logs out and into new user 
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      initSpotify();
+    }, [initSpotify])
+  );
+
+  useEffect(() => {
+    initSpotify();
+  }, [initSpotify]);
+
+  const fetchCurrentTrack = async (token: string) => {
+    if (isUpdatingRef.current) return;
+
+    const track = await getCurrentlyPlaying(token);
+    if (track && track.item) {
+      setCurrentTrack(track);
+    }
+  };
+
+  useEffect(() => {
+    if (!spotifyToken) return;
+
+    const interval = setInterval(() => {
+      fetchCurrentTrack(spotifyToken);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [spotifyToken]);
+
+  const handlePlayPause = async () => {
+    if (!spotifyToken) return;
+
+    isUpdatingRef.current = true;
+    const newPlayState = !isPlaying;
+
+    try {
+      setIsPlaying(newPlayState);
+
+      if (newPlayState) {
+        if (currentTrack) {
+          await resumePlayback(spotifyToken);
+        } else {
+          await playTrack(spotifyToken);
+        }
+      } else {
+        await pausePlayback(spotifyToken);
+      }
+
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 3000);
+    } catch (error) {
+      console.error("Play/Pause error:", error);
+      setIsPlaying(!newPlayState);
+      isUpdatingRef.current = false;
+    }
+  };
+
+  const handleSkipNext = async () => {
+    if (!spotifyToken) return;
+
+    isUpdatingRef.current = true;
+
+    try {
+      await skipToNext(spotifyToken);
+
+      setTimeout(async () => {
+        const track = await getCurrentlyPlaying(spotifyToken);
+        if (track) {
+          setCurrentTrack(track);
+          setIsPlaying(track.is_playing);
+        }
+        isUpdatingRef.current = false;
+      }, 500);
+    } catch (error) {
+      console.error("Skip next error:", error);
+      isUpdatingRef.current = false;
+    }
+  };
+
+  const handleSkipPrevious = async () => {
+    if (!spotifyToken) return;
+
+    isUpdatingRef.current = true;
+
+    try {
+      await skipToPrevious(spotifyToken);
+
+      setTimeout(async () => {
+        const track = await getCurrentlyPlaying(spotifyToken);
+        if (track) {
+          setCurrentTrack(track);
+          setIsPlaying(track.is_playing);
+        }
+        isUpdatingRef.current = false;
+      }, 500);
+    } catch (error) {
+      console.error("Skip previous error:", error);
+      isUpdatingRef.current = false;
+    }
+  };
+
+  const handleStartWaterReminders = async () => {
+  const hasPermission = await waterReminderService.requestPermissions();
+  
+  if (hasPermission) {
+    await waterReminderService.startWaterReminders();
+    Alert.alert('Activated', 'Water reminder has started!');
+  } else {
+    Alert.alert('Permission needed', 'We need you to allow notifications.');
+  }
+};
+
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView style={styles.container}>
@@ -83,11 +196,30 @@ const initSpotify = useCallback(async () => {
         <ThemedText style={styles.topbar_index}>
           You are on a <ThemedText type="title" style={styles.blue}>2x week</ThemedText> streak!
         </ThemedText>
+            
+      <TouchableOpacity style={styles.waterReminderButton} onPress={handleStartWaterReminders}>
+        <IconSymbol name="drop.fill" size={20} color="#2D7FF9" />
+        <ThemedText style={styles.waterReminderText}>Start water reminder!</ThemedText>
+      </TouchableOpacity>
 
-        {/* Activity */}
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
-          Today’s activity
-        </ThemedText>
+      {/* Activity */}
+      <ThemedText type="subtitle" style={styles.sectionTitle}>
+        Today´s activity
+      </ThemedText>
+      <View style={styles.activityRow}>
+        <ThemedView style={styles.activityCard}>
+          <Progress.Circle
+            size={100}
+            progress={6742 / 10000}
+            thickness={8}
+            color="#2D7FF9"
+            showsText={false}
+          />
+          
+          <ThemedText type="defaultSemiBold">6742 steps</ThemedText>
+          <ThemedText type="default">10,000 goal</ThemedText>
+        </ThemedView>
+        </View>
 
         <View style={styles.body}>
           <View style={styles.activityRow}>
@@ -312,21 +444,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#000000ff",
   },
- spotifyRow: {
-  flexDirection: "row",
-  justifyContent: "center",
-  alignItems: "center",
-  marginBottom: 20,
-},
+  spotifyRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  spotifyText: {
+    textAlign: "center",
+    fontSize: 12,
+    marginRight: 5,
+  },
+  spotifyIcon: {
+    width: 16,
+    height: 16,
+  },
 
-spotifyText: {
-  textAlign: "center",
-  fontSize: 12,
-  marginRight: 5,
-},
-
-spotifyIcon: {
-  width: 16,
-  height: 16,
-},
+  waterReminderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginVertical: 16,
+    gap: 8,
+  },
+  waterReminderText: {
+    color: '#2D7FF9',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
