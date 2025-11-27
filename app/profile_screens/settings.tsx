@@ -1,23 +1,9 @@
-// app/profile_screens/settings.tsx
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // ✅ LAGT TIL
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  Alert,
-  Image,
-  ImageStyle,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TextStyle,
-  TouchableOpacity,
-  useColorScheme,
-  View,
-  ViewStyle,
-} from "react-native";
-import { getStoredSpotifyToken, loginToSpotify, logoutFromSpotify } from "../utils/spotifyAuth"; // ✅ LAGT TIL logoutFromSpotify
+import { Alert, Image, ImageStyle, ScrollView, StyleSheet, Text, TextInput, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
+import { getStoredSpotifyToken, loginToSpotify, logoutFromSpotify } from "../utils/spotifyAuth";
 
 export default function Settings() {
   const colorScheme = useColorScheme();
@@ -225,7 +211,7 @@ export default function Settings() {
             </View>
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.musicButtonsContainer}>
           <TouchableOpacity style={styles.appleMusicButton}>
             <View style={styles.musicButtonRow}>
@@ -240,6 +226,7 @@ export default function Settings() {
               </Text>
               <Ionicons name="chevron-forward-outline" size={18} color="#fff" />
             </View>
+            
           </TouchableOpacity>
           <TouchableOpacity
             style={[
