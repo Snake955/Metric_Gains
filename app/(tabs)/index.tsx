@@ -355,6 +355,7 @@ const initSpotify = useCallback(async () => {
               <TouchableOpacity
                 onPress={handleSkipNext}
                 style={styles.controlButton}
+                activeOpacity={0.7}
               >
                 <IconSymbol name="forward.fill" size={32} color="#fff" />
               </TouchableOpacity>
@@ -613,6 +614,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
   },
+  placeholderContainer: {
     padding: 30,
     alignItems: "center",
     marginVertical: 20,
@@ -623,3 +625,4 @@ const styles = StyleSheet.create({
     color: "#888",
   },
 });
+
