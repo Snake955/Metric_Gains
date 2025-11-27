@@ -5,8 +5,8 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { Info } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from "react";
-import { Button, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Button, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Exercise = {
   id: string;
@@ -65,6 +65,7 @@ export default function WorkoutMain() {
   const [startTimer, setStartTimer] = useState<Date | null>(null);
   const [lastWorkoutStart, setLastWorkoutStart] = useState<Date | null>(null);
   const [lastWorkoutName, setLastWorkoutName] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -660,7 +661,7 @@ export default function WorkoutMain() {
         onRequestClose={() => setIsModalVisible(false)}
         animationType="slide"
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#111" }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#111" , paddingTop: Platform.OS === "ios" ? insets.top : 0,}}>
           <View style={{ padding: 16 }}>
             <Button
               title="Close"
