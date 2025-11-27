@@ -4,11 +4,13 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
 import * as Progress from "react-native-progress";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getCurrentlyPlaying, getStoredSpotifyToken, pausePlayback, playTrack, resumePlayback, skipToNext, skipToPrevious } from "../utils/spotifyAuth";
 
+import waterReminderService from '../utils/waterReminderService';
+import { router } from 'expo-router';
 
 import { onAuthStateChanged, User } from "firebase/auth";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
@@ -158,6 +160,17 @@ const initSpotify = useCallback(async () => {
     }
   };
 
+  const handleStartWaterReminders = async () => {
+  const hasPermission = await waterReminderService.requestPermissions();
+  
+  if (hasPermission) {
+    await waterReminderService.startWaterReminders();
+    Alert.alert('Activated', 'Water reminder has started!');
+  } else {
+    Alert.alert('Permission needed', 'We need you to allow notifications.');
+  }
+};
+
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView style={styles.container}>
@@ -169,7 +182,11 @@ const initSpotify = useCallback(async () => {
           day: "numeric",
           month: "long",})}
           </ThemedText>
+
+        <TouchableOpacity onPress={() => router.push('/notifications')}>
           <IconSymbol name="bell.fill" size={24} color="#3f3f3fff" />
+        </TouchableOpacity>
+
         </View>
         {/* This part will be changed later so that instead of Erik it will take the assigned user's name */}
         <ThemedText type="default">
@@ -180,6 +197,11 @@ const initSpotify = useCallback(async () => {
           You are on a <ThemedText type="title" style={styles.blue}>2x week</ThemedText> streak!
         </ThemedText>
             
+      <TouchableOpacity style={styles.waterReminderButton} onPress={handleStartWaterReminders}>
+        <IconSymbol name="drop.fill" size={20} color="#2D7FF9" />
+        <ThemedText style={styles.waterReminderText}>Start water reminder!</ThemedText>
+      </TouchableOpacity>
+
       {/* Activity */}
       <ThemedText type="subtitle" style={styles.sectionTitle}>
         Today´s activity
@@ -436,5 +458,20 @@ const styles = StyleSheet.create({
   spotifyIcon: {
     width: 16,
     height: 16,
-  }
+  },
+
+  waterReminderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginVertical: 16,
+    gap: 8,
+  },
+  waterReminderText: {
+    color: '#2D7FF9',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
