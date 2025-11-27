@@ -1,10 +1,10 @@
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
-import { useState, useEffect } from 'react';
-import * as Notifications from 'expo-notifications';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useState, useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
 
 export default function NotificationsScreen() {
 
@@ -85,6 +85,13 @@ return (
         ))}
     </View>
     )}
+    {currentWaterReminder.length === 0 && (
+    <View style={styles.zeroNotifs}>
+        <IconSymbol name="bell.slash" size={48} color="#888" />
+        <ThemedText style={styles.noWaterText}>No water reminders today!</ThemedText>
+        <ThemedText style={styles.timer}>Start water reminders in the welcome site!</ThemedText>
+    </View>
+    )}
     </ScrollView>
     </SafeAreaView>
   );
@@ -132,5 +139,17 @@ timer: {
 centerTitle: {
   textAlign: 'center',
   flex: 1,
+},
+
+zeroNotifs: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingVertical: 60,
+  paddingHorizontal: 15,
+},
+noWaterText: {
+  marginTop: 16,
+  fontSize: 16,
+  textAlign: 'center',
 },
 });
