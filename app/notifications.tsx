@@ -66,7 +66,7 @@ return (
         {currentWaterReminder.length > 0 && (
     <View style={styles.section}>
 
-    <ThemedText style={styles.sectionTitle} type="subtitle">💧Today's Water Reminders</ThemedText>
+    <ThemedText style={styles.sectionTitle} type="subtitle">{"💧Today's Water Reminders"}</ThemedText>
 
     {currentWaterReminder.map((varsel) => (
       <ThemedView key={varsel.identifier} style={styles.notifsCard}>
