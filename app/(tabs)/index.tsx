@@ -3,11 +3,10 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import React, { useEffect, useState } from "react";
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
 import * as Progress from "react-native-progress";
 import { SafeAreaView } from "react-native-safe-area-context";
 import waterReminderService from '../utils/waterReminderService';
-import { Alert } from 'react-native';
 import { router } from 'expo-router';
 
 import { onAuthStateChanged, User } from "firebase/auth";
