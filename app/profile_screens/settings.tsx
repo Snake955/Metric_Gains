@@ -3,7 +3,20 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // ✅ LAGT TIL
 import { Stack, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, Image, ImageStyle, ScrollView, StyleSheet, Text, TextInput, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
+import {
+  Alert,
+  Image,
+  ImageStyle,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextStyle,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+  ViewStyle,
+} from "react-native";
 import { getStoredSpotifyToken, loginToSpotify, logoutFromSpotify } from "../utils/spotifyAuth"; // ✅ LAGT TIL logoutFromSpotify
 
 export default function Settings() {
@@ -23,13 +36,11 @@ export default function Settings() {
     checkSpotifyConnection();
   }, []);
 
-  // ✅ OPPDATERT: Handle både login og disconnect
   const handleSpotifyLogin = async () => {
     try {
-      // ✅ NYTT: Hvis allerede connected, disconnect i stedet
       if (spotifyConnected) {
         Alert.alert(
-          "Disconnect your Spotify Account?",
+          "Disconnect Spotify?",
           "Are you sure you want to disconnect?",
           [
             {
@@ -42,7 +53,6 @@ export default function Settings() {
               onPress: async () => {
                 await logoutFromSpotify();
                 setSpotifyConnected(false);
-                console.log("Disconnected from Spotify");
               },
             },
           ]
@@ -52,7 +62,7 @@ export default function Settings() {
 
       // Login flow
       if (isDemoMode) {
-        console.log(" Demo mode: Setting mock token");
+        console.log("Demo mode: Setting mock token");
         
         const mockToken = "DEMO_TOKEN_" + Date.now();
         await AsyncStorage.setItem("spotifyAccessToken", mockToken);
@@ -64,8 +74,8 @@ export default function Settings() {
         setSpotifyConnected(true);
         
         Alert.alert(
-          "Spotify Account Connected",
-          "Connected!\n\nYour music is ready.",
+          "Demo Mode",
+          "Connected!\n\nYour songs are ready.",
           [{ text: "Let's Go!" }]
         );
         
@@ -182,59 +192,6 @@ export default function Settings() {
             </View>
           </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}
-              onPress={() => router.push('/profile_screens/setting_screens/noti_settings')}>
-              <View style={styles.menuRow}>
-                <Ionicons
-                  name="notifications-outline"
-                  size={22}
-                  color={isDarkMode ? "#fff" : "#000"}
-                />
-                <Text style={styles.menuText}>Notifications</Text>
-                <Ionicons
-                  name="chevron-forward-outline"
-                  size={18}
-                  color={isDarkMode ? "#fff" : "#000"}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.menuButton, { borderBottomWidth: 0 }]}
-            onPress={() => router.push("../velkommen/Velkommen")} 
-            >
-              <View style={styles.menuRow}>
-                <Ionicons name="log-out-outline" size={22} color="#f87171" />
-                <Text style={[styles.menuText, { color: "#f87171" }]}>Log out</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.musicButtonsContainer}>
-  <TouchableOpacity style={styles.appleMusicButton}>
-    <View style={styles.musicButtonRow}>
-      <Image
-        source={{
-          uri: "https://www.apple.com/newsroom/images/product/apple-music/apple_music-update_hero_08242021.jpg.news_app_ed.jpg",
-        }}
-        style={styles.appleLogo}
-      />
-      <Text style={[styles.musicButtonText, { color: "#ffffffff" }]}>Login to Apple Music</Text>
-      <Ionicons name="chevron-forward-outline" size={18} color="#fff" />
-    </View>
-  </TouchableOpacity>
-  <TouchableOpacity style={styles.spotifyButton}>
-    <View style={styles.musicButtonRow}>
-      <Image
-        source={{
-          uri: "https://e7.pngegg.com/pngimages/4/438/png-clipart-spotify-logo-spotify-mobile-app-computer-icons-app-store-music-free-icon-spotify-miscellaneous-logo.png",
-        }}
-        style={styles.spotifyLogo}
-      />
-      <Text style={[styles.musicButtonText, { color: "#000" }]}>
-        Login to Spotify</Text>
-      <Ionicons name="chevron-forward-outline" size={18} color="#000" />
-    </View>
-  </TouchableOpacity>
-</View>
-      <Text style={styles.footer}>© Metric Gains 2025</Text>
           <TouchableOpacity
             style={styles.menuButton}
             onPress={() =>
@@ -267,7 +224,8 @@ export default function Settings() {
               </Text>
             </View>
           </TouchableOpacity>
-
+        </View>
+        
         <View style={styles.musicButtonsContainer}>
           <TouchableOpacity style={styles.appleMusicButton}>
             <View style={styles.musicButtonRow}>
@@ -283,14 +241,12 @@ export default function Settings() {
               <Ionicons name="chevron-forward-outline" size={18} color="#fff" />
             </View>
           </TouchableOpacity>
-
-          {/* ✅ ENDRET: Fjernet disabled, kan nå trykke for å disconnect */}
           <TouchableOpacity
             style={[
               styles.spotifyButton,
               spotifyConnected && styles.spotifyConnected,
             ]}
-            onPress={handleSpotifyLogin} // ✅ Håndterer både login og disconnect
+            onPress={handleSpotifyLogin} // håndterer både login og disconnect
           >
             <View style={styles.musicButtonRow}>
               <Image
@@ -401,8 +357,7 @@ const Styles: {
     paddingHorizontal: 18,
   },
   spotifyConnected: {
-    backgroundColor: "#1ed760",
-    opacity: 0.7,
+    backgroundColor: "#14e15cff",
   },
   musicButtonRow: {
     flexDirection: "row",
@@ -475,5 +430,5 @@ const dark = StyleSheet.create({
   menuText: {
     ...Styles.menuText,
     color: "#fff",
-  }
+  },
 });
