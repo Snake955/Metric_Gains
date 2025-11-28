@@ -5,8 +5,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import Slider from '@react-native-community/slider';
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from 'expo-linear-gradient';
-import { onAuthStateChanged, User } from "firebase/auth";
 import { router } from 'expo-router';
+import { onAuthStateChanged, User } from "firebase/auth";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import * as Progress from "react-native-progress";
@@ -15,7 +15,7 @@ import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import { getCurrentlyPlaying, getRepeatMode, getShuffleState, getStoredSpotifyToken, pausePlayback, playTrack, resumePlayback, seekToPosition, skipToNext, skipToPrevious, toggleRepeat, toggleShuffle } from "../utils/spotifyAuth";
 
 export default function HomeScreen() {
-const [displayName, setDisplayName] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [currentTrack, setCurrentTrack] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -27,36 +27,36 @@ const [displayName, setDisplayName] = useState<string | null>(null);
   const isUpdatingRef = useRef(false);
   const lastFetchTime = useRef(Date.now());
 
-const initSpotify = useCallback(async () => {
-  const token = await getStoredSpotifyToken();
-  setSpotifyToken(token);
+  const initSpotify = useCallback(async () => {
+    const token = await getStoredSpotifyToken();
+    setSpotifyToken(token);
 
-  if (token) {
-    const track = await getCurrentlyPlaying(token);
-    if (track) {
-      setCurrentTrack(track);
-      setIsPlaying(track.is_playing);
-      setProgress(track.progress_ms || 0);
-      setDuration(track.item?.duration_ms || 0);
-      lastFetchTime.current = Date.now();
-    } else {
-      await playTrack(token);
-      setTimeout(async () => {
-        const newTrack = await getCurrentlyPlaying(token);
-        if (newTrack) {
-          setCurrentTrack(newTrack);
-          setIsPlaying(newTrack.is_playing);
-          setProgress(newTrack.progress_ms || 0);
-          setDuration(newTrack.item?.duration_ms || 0);
-          lastFetchTime.current = Date.now();
-        }
-      }, 1000);
+    if (token) {
+      const track = await getCurrentlyPlaying(token);
+      if (track) {
+        setCurrentTrack(track);
+        setIsPlaying(track.is_playing);
+        setProgress(track.progress_ms || 0);
+        setDuration(track.item?.duration_ms || 0);
+        lastFetchTime.current = Date.now();
+      } else {
+        await playTrack(token);
+        setTimeout(async () => {
+          const newTrack = await getCurrentlyPlaying(token);
+          if (newTrack) {
+            setCurrentTrack(newTrack);
+            setIsPlaying(newTrack.is_playing);
+            setProgress(newTrack.progress_ms || 0);
+            setDuration(newTrack.item?.duration_ms || 0);
+            lastFetchTime.current = Date.now();
+          }
+        }, 1000);
+      }
+
+      setIsShuffled(getShuffleState());
+      setRepeatMode(getRepeatMode());
     }
-    
-    setIsShuffled(getShuffleState());
-    setRepeatMode(getRepeatMode());
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (user: User | null) => {
@@ -211,11 +211,11 @@ const initSpotify = useCallback(async () => {
 
   const handleSeekComplete = async (value: number) => {
     if (!spotifyToken) return;
-    
+
     const seekPosition = Math.floor(value);
     setProgress(seekPosition);
     await seekToPosition(spotifyToken, seekPosition);
-    
+
     setTimeout(() => {
       setIsSeeking(false);
     }, 500);
@@ -234,14 +234,15 @@ const initSpotify = useCallback(async () => {
         {/* Header */}
         <View style={styles.header}>
           <ThemedText style={styles.greyDate}>{new Date().toLocaleDateString("no-NO",
-          {
-          weekday: "long",
-          day: "numeric",
-          month: "long",})}
+            {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
           </ThemedText>
-        <TouchableOpacity onPress={() => router.push('/notifications')}>
-          <IconSymbol name="bell.fill" size={24} color="#3f3f3fff" />
-        </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/notifications')}>
+            <IconSymbol name="bell.fill" size={24} color="#3f3f3fff" />
+          </TouchableOpacity>
         </View>
         {/* This part will be changed later so that instead of Erik it will take the assigned user's name */}
         <ThemedText type="default">
@@ -251,25 +252,10 @@ const initSpotify = useCallback(async () => {
         <ThemedText style={styles.topbar_index}>
           You are on a <ThemedText type="title" style={styles.blue}>2x week</ThemedText> streak!
         </ThemedText>
-            
-      {/* Activity */}
-      <ThemedText type="subtitle" style={styles.sectionTitle}>
-        Today´s activity
-      </ThemedText>
-      <View style={styles.activityRow}>
-        <ThemedView style={styles.activityCard}>
-          <Progress.Circle
-            size={100}
-            progress={6742 / 10000}
-            thickness={8}
-            color="#2D7FF9"
-            showsText={false}
-          />
-          
-          <ThemedText type="defaultSemiBold">6742 steps</ThemedText>
-          <ThemedText type="default">10,000 goal</ThemedText>
-        </ThemedView>
-        </View>
+        {/* Activity */}
+        <ThemedText type="subtitle" style={styles.sectionTitle}>
+          Today’s activity
+        </ThemedText>
 
         <View style={styles.body}>
           <View style={styles.activityRow}>
@@ -312,115 +298,115 @@ const initSpotify = useCallback(async () => {
           </ThemedView>
         </View>
 
-      {/* Music Player */}
-      {spotifyToken && currentTrack ? (
-        <View style={styles.playerContainer}>
-          <LinearGradient
-            colors={['#00000040', '#00000026']}
-            style={styles.playerCard}
-          >
-            {currentTrack.item?.album?.images?.[0]?.url && (
-              <View style={styles.albumContainer}>
-                <Image
-                  source={{ uri: currentTrack.item.album.images[0].url }}
-                  style={styles.albumArt}
-                />
-                <ThemedText type="defaultSemiBold" style={styles.trackName}>
-                  {currentTrack.item?.name || "No track"}
-                </ThemedText>
-                <ThemedText style={styles.artistName}>
-                  {currentTrack.item?.artists?.[0]?.name || "Unknown"}
-                </ThemedText>
+        {/* Music Player */}
+        {spotifyToken && currentTrack ? (
+          <View style={styles.playerContainer}>
+            <LinearGradient
+              colors={['#00000040', '#00000026']}
+              style={styles.playerCard}
+            >
+              {currentTrack.item?.album?.images?.[0]?.url && (
+                <View style={styles.albumContainer}>
+                  <Image
+                    source={{ uri: currentTrack.item.album.images[0].url }}
+                    style={styles.albumArt}
+                  />
+                  <ThemedText type="defaultSemiBold" style={styles.trackName}>
+                    {currentTrack.item?.name || "No track"}
+                  </ThemedText>
+                  <ThemedText style={styles.artistName}>
+                    {currentTrack.item?.artists?.[0]?.name || "Unknown"}
+                  </ThemedText>
+                </View>
+              )}
+
+              <View style={styles.musicControls}>
+                <TouchableOpacity
+                  onPress={handleSkipPrevious}
+                  style={styles.controlButton}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol name="backward.fill" size={32} color="#fff" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handlePlayPause}
+                  style={styles.playButton}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol
+                    name={isPlaying ? "pause.circle.fill" : "play.circle.fill"}
+                    size={72}
+                    color="#fff"
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleSkipNext}
+                  style={styles.controlButton}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol name="forward.fill" size={32} color="#fff" />
+                </TouchableOpacity>
               </View>
-            )}
 
-            <View style={styles.musicControls}>
-              <TouchableOpacity
-                onPress={handleSkipPrevious}
-                style={styles.controlButton}
-                activeOpacity={0.7}
-              >
-                <IconSymbol name="backward.fill" size={32} color="#fff" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handlePlayPause}
-                style={styles.playButton}
-                activeOpacity={0.7}
-              >
-                <IconSymbol
-                  name={isPlaying ? "pause.circle.fill" : "play.circle.fill"}
-                  size={72}
-                  color="#fff"
+              <View style={styles.progressContainer}>
+                <ThemedText style={styles.timeText}>{formatTime(progress)}</ThemedText>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={0}
+                  maximumValue={duration}
+                  value={progress}
+                  onValueChange={setProgress}
+                  onSlidingStart={handleSeekStart}
+                  onSlidingComplete={handleSeekComplete}
+                  minimumTrackTintColor="#fff"
+                  maximumTrackTintColor="#ffffff33"
+                  thumbTintColor="#fff"
                 />
-              </TouchableOpacity>
+                <ThemedText style={styles.timeText}>{formatTime(duration)}</ThemedText>
+              </View>
 
-              <TouchableOpacity
-                onPress={handleSkipNext}
-                style={styles.controlButton}
-                activeOpacity={0.7}
-              >
-                <IconSymbol name="forward.fill" size={32} color="#fff" />
-              </TouchableOpacity>
-            </View>
+              <View style={styles.secondaryControls}>
+                <TouchableOpacity
+                  onPress={handleShuffle}
+                  style={[styles.secondaryButton, isShuffled && styles.secondaryButtonActive]}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol name="shuffle" size={20} color={isShuffled ? "#2D7FF9" : "#fff"} />
+                </TouchableOpacity>
 
-            <View style={styles.progressContainer}>
-              <ThemedText style={styles.timeText}>{formatTime(progress)}</ThemedText>
-              <Slider
-                style={styles.slider}
-                minimumValue={0}
-                maximumValue={duration}
-                value={progress}
-                onValueChange={setProgress}
-                onSlidingStart={handleSeekStart}
-                onSlidingComplete={handleSeekComplete}
-                minimumTrackTintColor="#fff"
-                maximumTrackTintColor="#ffffff33"
-                thumbTintColor="#fff"
-              />
-              <ThemedText style={styles.timeText}>{formatTime(duration)}</ThemedText>
-            </View>
+                <TouchableOpacity
+                  onPress={handleRepeat}
+                  style={[styles.secondaryButton, repeatMode !== 'off' && styles.secondaryButtonActive]}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol
+                    name={repeatMode === 'track' ? "repeat.1" : "repeat"}
+                    size={20}
+                    color={repeatMode !== 'off' ? "#2D7FF9" : "#fff"}
+                  />
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.secondaryControls}>
-              <TouchableOpacity
-                onPress={handleShuffle}
-                style={[styles.secondaryButton, isShuffled && styles.secondaryButtonActive]}
-                activeOpacity={0.7}
-              >
-                <IconSymbol name="shuffle" size={20} color={isShuffled ? "#2D7FF9" : "#fff"} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleRepeat}
-                style={[styles.secondaryButton, repeatMode !== 'off' && styles.secondaryButtonActive]}
-                activeOpacity={0.7}
-              >
-                <IconSymbol 
-                  name={repeatMode === 'track' ? "repeat.1" : "repeat"} 
-                  size={20} 
-                  color={repeatMode !== 'off' ? "#2D7FF9" : "#fff"} 
+              <View style={styles.spotifyRow}>
+                <Image
+                  source={SpotifyLogo}
+                  style={styles.spotifyIcon}
+                  resizeMode="contain"
                 />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.spotifyRow}>
-              <Image
-                source={SpotifyLogo}
-                style={styles.spotifyIcon}
-                resizeMode="contain"
-              />
-            </View>
-          </LinearGradient>
-        </View>
-      ) : (
-        <View style={styles.placeholderContainer}>
-          <ThemedText style={styles.placeholderText}>
-            Connect Spotify in Settings
-          </ThemedText>
-        </View>
-      )}
-    </ScrollView>
-  </SafeAreaView>
+              </View>
+            </LinearGradient>
+          </View>
+        ) : (
+          <View style={styles.placeholderContainer}>
+            <ThemedText style={styles.placeholderText}>
+              Connect Spotify in Settings
+            </ThemedText>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
