@@ -31,10 +31,12 @@ yarn-error.*
 *.pem
 
 # local env files
-.env
-.env*.local
-.env.production
-.env.development
+# NB! Vi inkluderer .env i repoet KUN for lettere kjøring for sensor, slik at prosjektet kan kjøres uten manuell oppsett
+# I normalt utviklingsmiljø ville disse vært ignorert og ikke pusha til github.
+# .env
+# .env*.local
+# .env.production
+# .env.development
 
 # typescript
 *.tsbuildinfo
