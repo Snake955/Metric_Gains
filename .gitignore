@@ -45,3 +45,10 @@ app-example
 /ios
 /android
 
+# Firebase cache folder
+.firebase/
+
+# Firebase debug logs
+firebase-debug.log*
+firebase-debug.*.log*
+
