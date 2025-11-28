@@ -9,7 +9,7 @@ import { Picker } from "@react-native-picker/picker";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CalendarProvider, WeekCalendar } from 'react-native-calendars';
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -51,6 +51,10 @@ export default function CalendarScreen() {
     d.setHours(12, 0, 0, 0);    // 12:00
     return d;
   });
+
+  const [showDatePicker, setShowDatePicker] = useState(Platform.OS === "ios");
+  const [showStartPicker, setShowStartPicker] = useState(Platform.OS === "ios");
+  const [showEndPicker, setShowEndPicker] = useState(Platform.OS === "ios");
 
   const [user, setUser] = useState<User | null>(null);
   const [userWorkouts, setUserWorkouts] = useState<Workout[]>([]);
@@ -381,14 +385,33 @@ export default function CalendarScreen() {
             <View style={styles.timeRow}>
               <View style={styles.timeField}>
                 <Text style={styles.timeLabel}>Dato</Text>
-                <DateTimePicker
-                  value={plannedDate}
-                  mode="date"
-                  display="compact"
-                  onChange={(event, date) => {
-                    if (date) setPlannedDate(date);
-                  }}
-                />
+
+                {Platform.OS === "android" && (
+                  <TouchableOpacity
+                    onPress={() => setShowDatePicker(true)}
+                    style={{ paddingVertical: 8 }}
+                  >
+                    <Text>{plannedDate.toLocaleDateString()}</Text>
+                  </TouchableOpacity>
+                )}
+
+                {(Platform.OS === "ios" || showDatePicker) && (
+                  <DateTimePicker
+                    value={plannedDate}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "compact" : "default"}
+                    onChange={(event: any, date?: Date) => {
+                      if (Platform.OS === "android") {
+                        setShowDatePicker(false);
+                        if (event?.type === "set" && date) {
+                          setPlannedDate(date);
+                        }
+                      } else {
+                        if (date) setPlannedDate(date);
+                      }
+                    }}
+                  />
+                )}
               </View>
             </View>
 
@@ -396,26 +419,65 @@ export default function CalendarScreen() {
             <View style={styles.timeRow}>
               <View style={styles.timeField}>
                 <Text style={styles.timeLabel}>Start</Text>
-                <DateTimePicker
-                  value={startTime}
-                  mode="time"
-                  display="compact"
-                  onChange={(event, date) => {
-                    if (date) setStartTime(date);
-                  }}
-                />
+
+                {Platform.OS === "android" && (
+                  <TouchableOpacity
+                    onPress={() => setShowStartPicker(true)}
+                    style={{ paddingVertical: 8 }}
+                  >
+                    <Text>{formatTime(startTime)}</Text>
+                  </TouchableOpacity>
+                )}
+
+                {(Platform.OS === "ios" || showStartPicker) && (
+                  <DateTimePicker
+                    value={startTime}
+                    mode="time"
+                    display={Platform.OS === "ios" ? "compact" : "default"}
+                    onChange={(event: any, date?: Date) => {
+                      if (Platform.OS === "android") {
+                        setShowStartPicker(false);
+                        if (event?.type === "set" && date) {
+                          setStartTime(date);
+                        }
+                      } else {
+                        if (date) setStartTime(date);
+                      }
+                    }}
+                  />
+                )}
               </View>
 
+              {/* Slutt */}
               <View style={styles.timeField}>
                 <Text style={styles.timeLabel}>Slutt</Text>
-                <DateTimePicker
-                  value={endTime}
-                  mode="time"
-                  display="compact"
-                  onChange={(event, date) => {
-                    if (date) setEndTime(date);
-                  }}
-                />
+
+                {Platform.OS === "android" && (
+                  <TouchableOpacity
+                    onPress={() => setShowEndPicker(true)}
+                    style={{ paddingVertical: 8 }}
+                  >
+                    <Text>{formatTime(endTime)}</Text>
+                  </TouchableOpacity>
+                )}
+
+                {(Platform.OS === "ios" || showEndPicker) && (
+                  <DateTimePicker
+                    value={endTime}
+                    mode="time"
+                    display={Platform.OS === "ios" ? "compact" : "default"}
+                    onChange={(event: any, date?: Date) => {
+                      if (Platform.OS === "android") {
+                        setShowEndPicker(false);
+                        if (event?.type === "set" && date) {
+                          setEndTime(date);
+                        }
+                      } else {
+                        if (date) setEndTime(date);
+                      }
+                    }}
+                  />
+                )}
               </View>
             </View>
 
