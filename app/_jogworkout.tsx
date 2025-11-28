@@ -1,11 +1,13 @@
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { Pedometer } from 'expo-sensors';
 import { ChevronLeft } from 'lucide-react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import { getCurrentlyPlaying, getStoredSpotifyToken, pausePlayback, resumePlayback, skipToNext, skipToPrevious } from "./utils/spotifyAuth";
 
 type Coord = { latitude: number; longitude: number; timestamp: number };
 
@@ -24,6 +26,10 @@ export default function JogWorkoutFullScreen() {
   const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [showRecenterButton, setShowRecenterButton] = useState(false);
   const [compassRotation, setCompassRotation] = useState(0);
+  
+  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const mapRef = useRef<MapView>(null);
   const locSubscription = useRef<Location.LocationSubscription | null>(null);
@@ -73,6 +79,86 @@ export default function JogWorkoutFullScreen() {
     const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
     
     return (toDeg(Math.atan2(y, x)) + 360) % 360;
+  };
+
+  const initSpotify = useCallback(async () => {
+    const token = await getStoredSpotifyToken();
+    setSpotifyToken(token);
+
+    if (token) {
+      const track = await getCurrentlyPlaying(token);
+      if (track) {
+        setCurrentTrack(track);
+        setIsPlaying(track.is_playing);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    initSpotify();
+  }, [initSpotify]);
+
+  useEffect(() => {
+    if (!spotifyToken) return;
+
+    const interval = setInterval(async () => {
+      const track = await getCurrentlyPlaying(spotifyToken);
+      if (track && track.item) {
+        setCurrentTrack(track);
+        setIsPlaying(track.is_playing);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [spotifyToken]);
+
+  const handlePlayPause = async () => {
+    if (!spotifyToken) return;
+
+    try {
+      if (isPlaying) {
+        await pausePlayback(spotifyToken);
+      } else {
+        await resumePlayback(spotifyToken);
+      }
+      setIsPlaying(!isPlaying);
+    } catch (error) {
+      console.error("Play/Pause error:", error);
+    }
+  };
+
+  const handleSkipNext = async () => {
+    if (!spotifyToken) return;
+
+    try {
+      await skipToNext(spotifyToken);
+      setTimeout(async () => {
+        const track = await getCurrentlyPlaying(spotifyToken);
+        if (track) {
+          setCurrentTrack(track);
+          setIsPlaying(track.is_playing);
+        }
+      }, 500);
+    } catch (error) {
+      console.error("Skip next error:", error);
+    }
+  };
+
+  const handleSkipPrevious = async () => {
+    if (!spotifyToken) return;
+
+    try {
+      await skipToPrevious(spotifyToken);
+      setTimeout(async () => {
+        const track = await getCurrentlyPlaying(spotifyToken);
+        if (track) {
+          setCurrentTrack(track);
+          setIsPlaying(track.is_playing);
+        }
+      }, 500);
+    } catch (error) {
+      console.error("Skip previous error:", error);
+    }
   };
 
   async function fetchTemperature(lat: number, lon: number) {
@@ -319,12 +405,10 @@ export default function JogWorkoutFullScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-            {/* Gradient bak statusbar */}
       <LinearGradient
         colors={['#00000066', '#00000000']}
         style={styles.statusBarBackground}
       />
-
 
       {initialRegion && (
         <MapView
@@ -351,17 +435,37 @@ export default function JogWorkoutFullScreen() {
         </MapView>
       )}
 
-      {/* Tilbake-knapp */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.back()}
-        activeOpacity={0.8}
-      >
-        <View style={styles.backButtonInner}>
-          <ChevronLeft size={24} color="#111" />
-          <Text style={styles.backButtonText}>Tilbake</Text>
-        </View>
-      </TouchableOpacity>
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
+          <View style={styles.backButtonInner}>
+            <ChevronLeft size={24} color="#fff" />
+            <Text style={styles.backButtonText}>Tilbake</Text>
+          </View>
+        </TouchableOpacity>
+
+        {spotifyToken && currentTrack && (
+          <View style={styles.miniPlayer}>
+            <TouchableOpacity onPress={handleSkipPrevious} style={styles.miniButton} activeOpacity={0.7}>
+              <IconSymbol name="backward.fill" size={18} color="#fff" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={handlePlayPause} style={styles.miniPlayButton} activeOpacity={0.7}>
+              <IconSymbol 
+                name={isPlaying ? "pause.fill" : "play.fill"} 
+                size={20} 
+                color="#fff"
+              />
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={handleSkipNext} style={styles.miniButton} activeOpacity={0.7}>
+              <IconSymbol name="forward.fill" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
 
       {showRecenterButton && isRunning && (
         <TouchableOpacity
@@ -442,7 +546,7 @@ export default function JogWorkoutFullScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#e5e5e5' },
-    statusBarBackground: {
+  statusBarBackground: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -451,10 +555,14 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   map: { flex: 1 },
-  backButton: {
+  headerRow: {
     position: 'absolute',
     top: 60,
     left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     zIndex: 1001,
   },
   backButtonInner: {
@@ -477,6 +585,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 4,
+  },
+  miniPlayer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#00000033',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#0000004d',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    gap: 12,
+  },
+  miniButton: {
+    padding: 6,
+  },
+  miniPlayButton: {
+    padding: 6,
   },
   topOverlay: {
     position: 'absolute',
