@@ -38,8 +38,8 @@ export default function Register() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-     mediaTypes: ImagePicker.MediaTypeOptions.Images
-,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images
+      ,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.9,
@@ -76,13 +76,13 @@ export default function Register() {
       return;
     }
     if (!confirmPass) {
-  Alert.alert("Manglende info", "Bekreft passordet.");
-  return;
-}
-if (pass !== confirmPass) {
-  Alert.alert("Passord-mismatch", "Passordene må være like.");
-  return;
-}
+      Alert.alert("Manglende info", "Bekreft passordet.");
+      return;
+    }
+    if (pass !== confirmPass) {
+      Alert.alert("Passord-mismatch", "Passordene må være like.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -154,99 +154,99 @@ if (pass !== confirmPass) {
               <AntDesign name="left" size={22} />
             </TouchableOpacity>
             <Text style={styles.title}>
-  <Text style={{ fontWeight: "700" }}>Opprett</Text>
-  din nye bruker
-</Text>
+              <Text style={{ fontWeight: "700" }}>Opprett</Text>
+              din nye bruker
+            </Text>
             <View style={{ width: 22 }} />
           </View>
 
           {/* photo */}
           <View style={styles.photoWrap}>
-  <Pressable
-    onPress={askAndPick}
-    disabled={uploading}
-    style={({pressed}) => [{ opacity: (uploading || pressed) ? 0.7 : 1 }]}
-    android_ripple={{ borderless: true }}
-    hitSlop={8}
-  >
-           <View style={styles.photoCircle}>
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} style={{ width: 146, height: 146, borderRadius: 73 }} />
-      ) : (
-        <>
-          <View style={styles.photoLine1} />
-          <View style={styles.photoLine2} />
-        </>
-      )}
+            <Pressable
+              onPress={askAndPick}
+              disabled={uploading}
+              style={({ pressed }) => [{ opacity: (uploading || pressed) ? 0.7 : 1 }]}
+              android_ripple={{ borderless: true }}
+              hitSlop={8}
+            >
+              <View style={styles.photoCircle}>
+                {imageUri ? (
+                  <Image source={{ uri: imageUri }} style={{ width: 146, height: 146, borderRadius: 73 }} />
+                ) : (
+                  <>
+                    <View style={styles.photoLine1} />
+                    <View style={styles.photoLine2} />
+                  </>
+                )}
 
-      {uploading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" />
-        </View>
-      )}
+                {uploading && (
+                  <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="large" />
+                  </View>
+                )}
 
-      <TouchableOpacity
-        style={[styles.editBadge, uploading && { opacity: 0.5 }]}
-        onPress={askAndPick}
-        disabled={uploading}
-        hitSlop={10}
-      >
-        {uploading ? (
-          <ActivityIndicator size="small" />
-        ) : (
-          <AntDesign name="edit" size={16} />
-        )}
-      </TouchableOpacity>
-    </View>
-  </Pressable>
-</View>
+                <TouchableOpacity
+                  style={[styles.editBadge, uploading && { opacity: 0.5 }]}
+                  onPress={askAndPick}
+                  disabled={uploading}
+                  hitSlop={10}
+                >
+                  {uploading ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    <AntDesign name="edit" size={16} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </View>
 
           <View style={styles.form}>
             <LabeledInput icon="user" placeholder="Skriv inn navn" value={name} onChangeText={setName} />
-           <View>
-<LabeledInput
-  icon="lock"
-  placeholder="Skriv inn passord"
-  value={pass}
-  onChangeText={setPass}
-  secureTextEntry={!showPass}
-  style={[
-    passwordsMismatch && { borderColor: "#dc2626" },
-    passwordsMatch && { borderColor: "#22c55e" }
-  ]}
-/>
+            <View>
+              <LabeledInput
+                icon="lock"
+                placeholder="Skriv inn passord"
+                value={pass}
+                onChangeText={setPass}
+                secureTextEntry={!showPass}
+                style={[
+                  passwordsMismatch && { borderColor: "#dc2626" },
+                  passwordsMatch && { borderColor: "#22c55e" }
+                ]}
+              />
 
 
-  <TouchableOpacity
-    onPress={() => setShowPass((s) => !s)}
-    style={styles.eyeToggle}
-    hitSlop={8}
-  >
-    <AntDesign name={showPass ? "eye" : "eyeo"} size={18} color="#111" />
-  </TouchableOpacity>
-</View>
+              <TouchableOpacity
+                onPress={() => setShowPass((s) => !s)}
+                style={styles.eyeToggle}
+                hitSlop={8}
+              >
+                <AntDesign name={showPass ? "eye" : "eye-invisible"} size={18} color="#111" />
+              </TouchableOpacity>
+            </View>
 
-<View>
-<LabeledInput
-  icon="lock"
-  placeholder="Bekreft passord"
-  value={confirmPass}
-  onChangeText={setConfirmPass}
-  secureTextEntry={!showConfirmPass}
-  style={{
-    borderColor: passwordsMismatch ? "#dc2626" : passwordsMatch ? "#22c55e" : "transparent"
-  }}
-/>
+            <View>
+              <LabeledInput
+                icon="lock"
+                placeholder="Bekreft passord"
+                value={confirmPass}
+                onChangeText={setConfirmPass}
+                secureTextEntry={!showConfirmPass}
+                style={{
+                  borderColor: passwordsMismatch ? "#dc2626" : passwordsMatch ? "#22c55e" : "transparent"
+                }}
+              />
 
 
-  <TouchableOpacity
-    onPress={() => setShowConfirmPass((s) => !s)}
-    style={styles.eyeToggle}
-    hitSlop={8}
-  >
-    <AntDesign name={showConfirmPass ? "eye" : "eyeo"} size={18} color="#111" />
-  </TouchableOpacity>
-</View>
+              <TouchableOpacity
+                onPress={() => setShowConfirmPass((s) => !s)}
+                style={styles.eyeToggle}
+                hitSlop={8}
+              >
+                <AntDesign name={showConfirmPass ? "eye" : "eye-invisible"} size={18} color="#111" />
+              </TouchableOpacity>
+            </View>
             <LabeledInput
               icon="mail"
               placeholder="Email adresse"
@@ -275,17 +275,17 @@ if (pass !== confirmPass) {
                 <Text style={styles.secondaryText}>Logg inn</Text>
               </TouchableOpacity>
 
-           <TouchableOpacity
-  style={[styles.primaryBtn, (loading || uploading || pass !== confirmPass || pass.length < 6) && { opacity: 0.7 }]}
-  onPress={handleRegister}
-  activeOpacity={0.85}
-  disabled={loading || uploading || pass !== confirmPass || pass.length < 6}
->
-              {loading ? (
-  <ActivityIndicator color="#fff" />
-) : (
-  <Text style={styles.primaryText}>Registrer</Text>
-)}
+              <TouchableOpacity
+                style={[styles.primaryBtn, (loading || uploading || pass !== confirmPass || pass.length < 6) && { opacity: 0.7 }]}
+                onPress={handleRegister}
+                activeOpacity={0.85}
+                disabled={loading || uploading || pass !== confirmPass || pass.length < 6}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.primaryText}>Registrer</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -325,114 +325,150 @@ function LabeledInput(props: {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff",
-     paddingHorizontal: 16 },
-  headerRow: { flexDirection: "row", 
-    alignItems: "center", 
-    justifyContent: "space-between", 
-    paddingTop: 6, 
-    marginBottom: 8 },
-  title: { fontSize: 20, 
-    flex: 1, 
-    textAlign: "left", 
-    marginLeft: 6 },
-  eyeToggle: { 
-  position: "absolute", 
-  right: 14, 
-  top: 16 
-},
+  safe: {
+    flex: 1, backgroundColor: "#fff",
+    paddingHorizontal: 16
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 6,
+    marginBottom: 8
+  },
+  title: {
+    fontSize: 20,
+    flex: 1,
+    textAlign: "left",
+    marginLeft: 6
+  },
+  eyeToggle: {
+    position: "absolute",
+    right: 14,
+    top: 16
+  },
 
   loadingOverlay: {
-  ...StyleSheet.absoluteFillObject,
-  justifyContent: "center", alignItems: "center",
-  backgroundColor: "rgba(255,255,255,0.6)",
-  borderRadius: 75, zIndex: 3,
-},
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center", alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.6)",
+    borderRadius: 75, zIndex: 3,
+  },
 
-  photoWrap: { alignItems: "center", 
-    marginVertical: 8 },
+  photoWrap: {
+    alignItems: "center",
+    marginVertical: 8
+  },
   photoCircle: {
-    width: 150, 
-    height: 150, 
-    borderRadius: 75, 
-    borderWidth: 2, 
-    borderColor: "#cfcfcf", 
-    justifyContent: "center", 
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 2,
+    borderColor: "#cfcfcf",
+    justifyContent: "center",
     alignItems: "center",
     overflow: "visible",
   },
-  photoLine1: { position: "absolute", 
-    width: 120, 
-    height: 2, 
-    backgroundColor: "#cfcfcf", 
-    transform: [{ rotate: "45deg" }] },
-  photoLine2: { position: "absolute", 
-    width: 120, 
-    height: 2, 
-    backgroundColor: "#cfcfcf", 
-    transform: [{ rotate: "-45deg" }] },
+  photoLine1: {
+    position: "absolute",
+    width: 120,
+    height: 2,
+    backgroundColor: "#cfcfcf",
+    transform: [{ rotate: "45deg" }]
+  },
+  photoLine2: {
+    position: "absolute",
+    width: 120,
+    height: 2,
+    backgroundColor: "#cfcfcf",
+    transform: [{ rotate: "-45deg" }]
+  },
   editBadge: {
-    position: "absolute", 
-    right: 6, 
-    bottom: 6, 
-    width: 26, 
-    height: 26, 
+    position: "absolute",
+    right: 6,
+    bottom: 6,
+    width: 26,
+    height: 26,
     borderRadius: 13,
-    backgroundColor: "#fff", 
-    borderWidth: 1, 
-    borderColor: "#000", 
-    alignItems: "center", 
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#000",
+    alignItems: "center",
     justifyContent: "center",
-    zIndex: 5, 
-  elevation: 5,
+    zIndex: 5,
+    elevation: 5,
   },
 
-  form: { marginTop: 10, 
-    gap: 33 },
-  inputRow: { flexDirection: "row", 
-    alignItems: "center", 
-    backgroundColor: "#E6E6E6", 
-    borderRadius: 14, 
-    paddingHorizontal: 12, 
-    height: 54,  
+  form: {
+    marginTop: 10,
+    gap: 33
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E6E6E6",
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    height: 54,
     borderWidth: 2,
-  borderColor: "transparent" },
-  inputIcon: { marginRight: 10, 
-    color: "#111" },
-  input: { flex: 1, 
-    fontSize: 16 },
+    borderColor: "transparent"
+  },
+  inputIcon: {
+    marginRight: 10,
+    color: "#111"
+  },
+  input: {
+    flex: 1,
+    fontSize: 16
+  },
 
-  footer: { marginTop: 24, 
-    marginBottom: 16 },
-  dots: { flexDirection: "row", 
-    gap: 10, 
-    marginBottom: 16, 
-    paddingLeft: 8 },
-  dot: { width: 36, 
-    height: 8, 
-    borderRadius: 4 },
+  footer: {
+    marginTop: 24,
+    marginBottom: 16
+  },
+  dots: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+    paddingLeft: 8
+  },
+  dot: {
+    width: 36,
+    height: 8,
+    borderRadius: 4
+  },
   dotActive: { backgroundColor: "#111" },
   dotInactive: { backgroundColor: "#e5e5e5" },
-  ctaRow: { flexDirection: "row", 
-    justifyContent: "flex-end", 
-    gap: 10, 
-    paddingRight: 8 },
-  primaryBtn: { backgroundColor: "#111", 
-    paddingHorizontal: 16, 
-    height: 36, 
-    borderRadius: 18, 
-    alignItems: "center", 
-    justifyContent: "center" },
-  primaryText: { color: "#fff", 
-    fontWeight: "600" },
-  secondaryBtn: { backgroundColor: "#fff", 
-    borderWidth: 1, 
-    borderColor: "#111", 
-    paddingHorizontal: 14, 
-    height: 36, 
-    borderRadius: 18, 
-    alignItems: "center", 
-    justifyContent: "center" },
-  secondaryText: { color: "#111", 
-    fontWeight: "600" },
+  ctaRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+    paddingRight: 8
+  },
+  primaryBtn: {
+    backgroundColor: "#111",
+    paddingHorizontal: 16,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  primaryText: {
+    color: "#fff",
+    fontWeight: "600"
+  },
+  secondaryBtn: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#111",
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  secondaryText: {
+    color: "#111",
+    fontWeight: "600"
+  },
 });
