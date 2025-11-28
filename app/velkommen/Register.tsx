@@ -154,7 +154,7 @@ export default function Register() {
               <AntDesign name="left" size={22} />
             </TouchableOpacity>
             <Text style={styles.title}>
-              <Text style={{ fontWeight: "700" }}>Opprett</Text>
+              <Text style={{ fontWeight: "700" }}>Opprett </Text>
               din nye bruker
             </Text>
             <View style={{ width: 22 }} />
