@@ -11,6 +11,15 @@ export default function Settings() {
   const styles = isDarkMode ? dark : light;
   const router = useRouter();
 
+  const handleLogout = async () => {
+  try {
+    // behold Firebase-sesjon og biometrikk 
+    router.replace("/velkommen/Velkommen");
+  } catch (e) {
+    console.log("Feil ved utlogging:", e);
+  }
+};
+
   const [spotifyConnected, setSpotifyConnected] = useState(false);
   const isDemoMode = !process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
 
