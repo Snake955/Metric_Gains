@@ -1,27 +1,75 @@
 import { useRouter } from "expo-router";
-import React from 'react';
+import React, { useState, useEffect } from "react";  
 import type { ImageStyle, TextStyle, ViewStyle } from 'react-native';
-import { Image, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, useColorScheme, View, ActivityIndicator } from 'react-native';
+
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { FIREBASE_AUTH, FIRESTORE_DB } from "../../FirebaseConfig";
+
+
+const avatarFallback = require("../../assets/images/avatar-placeholder.png"); // local png som placeholder hvis brukeren mangler/ikke har pfp
+
+
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
-  const placeholderImage = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
   const isDarkMode = colorScheme === 'dark';
   const styles = isDarkMode ? dark : light;
+
+  //Photoconst og photo useeffect function
+  const [photoURL, setPhotoURL] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+useEffect(() => {
+  const unsub = onAuthStateChanged(FIREBASE_AUTH, async (user) => {
+    if (!user) {
+      setPhotoURL(null);  //Bedre firestore code mot double string error 
+      setLoading(false);
+      return;
+    }
+
+    let url: string | null = typeof user.photoURL === "string" ? user.photoURL : null;
+
+    if (!url) {
+      const snap = await getDoc(doc(FIRESTORE_DB, "users", user.uid));
+      if (snap.exists()) {
+        const data = snap.data() as { photoURL?: unknown };
+        if (typeof data.photoURL === "string") {
+          url = data.photoURL;
+        }
+      }
+    }
+
+    setPhotoURL(url);
+    setLoading(false);
+  });
+
+  return unsub;
+}, []);
+
+//End of useeffect function
+
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Profile</Text>
 
-      <Image source={{ uri: placeholderImage }} style={styles.avatar} />
+{loading ? (
+  <ActivityIndicator style={{ marginTop: 20 }} />
+) : (
+  <View style={styles.profileHeader}>
+    <Image
+      source={photoURL ? { uri: photoURL } : avatarFallback}
+      style={styles.avatar}
+    />
+  </View>
+)}
 
       <View style={styles.achievementsContainer}>
         <View style={styles.achievement}>
           <Text style={styles.achievementText}>🌟 Newbie</Text>
         </View>
-
-
 
 
         <View style={styles.rowAchievements}>
@@ -42,9 +90,6 @@ export default function ProfileScreen() {
           </View>
         </View>
       </View>
-
-
-
 
       <View style={styles.menu}>
         <TouchableOpacity style={styles.menuButton}>
@@ -83,6 +128,7 @@ type Styles = {
   menu: ViewStyle;
   menuButton: ViewStyle;
   menuText: TextStyle;
+  profileHeader: ViewStyle;
 };
 
 const Styles: Styles = {
@@ -90,6 +136,10 @@ const Styles: Styles = {
     flex: 1,
     alignItems: 'center',
     paddingTop: 80,
+  },
+    profileHeader: {        
+    alignItems: 'center',
+    marginBottom: 20,
   },
   avatar: {
     width: 100,
