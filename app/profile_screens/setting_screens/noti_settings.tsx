@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import React from "react";
-import { ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle } from "react-native";
+import { ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, useColorScheme, View, ViewStyle, Alert } from "react-native";
+
+import waterReminderService from '../../utils/waterReminderService';
 
 export default function NotiSettings() {
   const colorScheme = useColorScheme();
@@ -9,7 +11,10 @@ export default function NotiSettings() {
   const styles = isDarkMode ? dark : light;
   const router = useRouter();
 
-
+  const handleCancel = async () => {
+    await waterReminderService.cancelAllReminders();
+    Alert.alert('Cancelled water reminders', 'All the water reminders has stopped');
+  };
 
   return (
     <>
@@ -50,6 +55,9 @@ export default function NotiSettings() {
                   size={18}
                   color={isDarkMode ? "#fff" : "#000"}
                 />
+                <TouchableOpacity onPress={handleCancel}>
+                  <Text style={styles.menuText}>Stop water reminders</Text>
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
 

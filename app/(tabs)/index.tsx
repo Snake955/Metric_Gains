@@ -6,6 +6,7 @@ import Slider from '@react-native-community/slider';
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from 'expo-linear-gradient';
 import { onAuthStateChanged, User } from "firebase/auth";
+import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import * as Progress from "react-native-progress";
@@ -238,7 +239,9 @@ const initSpotify = useCallback(async () => {
           day: "numeric",
           month: "long",})}
           </ThemedText>
+        <TouchableOpacity onPress={() => router.push('/notifications')}>
           <IconSymbol name="bell.fill" size={24} color="#3f3f3fff" />
+        </TouchableOpacity>
         </View>
         {/* This part will be changed later so that instead of Erik it will take the assigned user's name */}
         <ThemedText type="default">
