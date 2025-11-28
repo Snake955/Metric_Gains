@@ -1,11 +1,26 @@
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth"; 
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import biometricsIcon from "../../assets/images/biometrics.png";
+
+import * as LocalAuthentication from "expo-local-authentication"; //kode for biometrisk import
+import * as SecureStore from "expo-secure-store";
+
+
+//Kommentert kode var for mulig implementasjon for google api loginn men vi hadde ikke devbuild
+
+//import * as WebBrowser from "expo-web-browser";
+//import * as Google from "expo-auth-session/providers/google";
+//import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+//import Constants from "expo-constants";
+//import { makeRedirectUri } from "expo-auth-session";
+//import * as AuthSession from "expo-auth-session";
+
+//WebBrowser.maybeCompleteAuthSession(); //Expo browser session for OAuth som sender tilbake til appen etter google auth
 
 export default function Login() {
   const router = useRouter();
@@ -14,49 +29,124 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(FIREBASE_AUTH, (user) => {
-      if (user) router.replace("../(tabs)");
-    });
-    return unsub;
-  }, []);
+  
+  const [existingUser, setExistingUser] = useState<any | null>(null);
 
-  const handleLogin = async () => {
-    if (!email.trim() || !pass) {
-      Alert.alert("Mangler info", "Skriv inn e-post og passord.");
-      return;
-    }
-    setLoading(true);
-    try {
-      await signInWithEmailAndPassword(FIREBASE_AUTH, email.trim(), pass);
-    } catch (e: any) {
-      let msg = "Kunne ikke logge inn. Prøv igjen.";
-      if (e.code === "auth/invalid-email") msg = "Ugyldig e-post.";
-      if (e.code === "auth/user-not-found" || e.code === "auth/wrong-password")
-        msg = "Feil e-post eller passord.";
-      if (e.code === "auth/too-many-requests")
-        msg = "For mange forsøk. Vent litt og prøv igjen.";
-      Alert.alert("Innlogging feilet", msg);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleForgot = async () => {
-    if (!email.trim()) {
-      Alert.alert("Skriv inn e-post", "Vi trenger e-posten for å sende lenke.");
-      return;
+  //const extra = Constants.expoConfig?.extra as any; 
+
+   //  console.log('WEB CLIENT ID =>', extra?.expoClientId);
+   //  console.log("APP OWNERSHIP:", Constants.appOwnership);
+
+
+     // const redirectUri = makeRedirectUri(); 
+   // const redirectUri = AuthSession.makeRedirectUri({ useProxy: true });       
+// console.log("REDIRECT:", redirectUri);
+ //Redirect proxy
+
+//const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+//  clientId: Constants.expoConfig?.extra?.expoClientId!,
+//  redirectUri,
+//});
+
+//useEffect(() => {
+ // if (response?.type === "success") {
+ //   const cred = GoogleAuthProvider.credential(response.params.id_token);
+//    signInWithCredential(FIREBASE_AUTH, cred);
+ // }
+//}, [response]);
+
+//Oppdatert useEffect()
+useEffect(() => {
+  const unsub = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+    setExistingUser(user);
+  });
+  return unsub;
+}, []);
+
+
+
+  //Første biometrisk innlogging spør bruker om har lyst bruke
+const handleLogin = async () => {
+  if (!email.trim() || !pass) {
+    Alert.alert("Mangler info", "Skriv inn e-post og passord.");
+    return;
+  }
+  setLoading(true);
+  try {
+    await signInWithEmailAndPassword(FIREBASE_AUTH, email.trim(), pass);
+
+    // Husk meg etter biometrisk innlogging
+    const compatible = await LocalAuthentication.hasHardwareAsync();
+    const enrolled = await LocalAuthentication.isEnrolledAsync();
+
+    if (compatible && enrolled) {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Aktiver biometrisk innlogging?",
+        cancelLabel: "Nei takk",
+      });
+
+      if (result.success) {
+        await SecureStore.setItemAsync("biometricEnabled", "true");
+      } else {
+        await SecureStore.deleteItemAsync("biometricEnabled");
+      }
+    } else {
+      // Enhet støtter ikke biometrikk
+      await SecureStore.deleteItemAsync("biometricEnabled");
     }
-    try {
-      await sendPasswordResetEmail(FIREBASE_AUTH, email.trim()); //Denne kodeblokken blir endret etterhvert var laget i midlertidig for testing på annen gammel main branch
-      Alert.alert("Sjekk e-posten", "Vi har sendt en lenke for å nullstille passord.");
-    } catch (e: any) {
-      let msg = "Kunne ikke sende lenke.";
-      if (e.code === "auth/invalid-email") msg = "Ugyldig e-post.";
-      if (e.code === "auth/user-not-found") msg = "Bruker finnes ikke.";
-      Alert.alert("Feil", msg);
-    }
-  };
+    
+    // gå videre etter vellykket login
+    router.replace("/(tabs)");
+  } catch (e: any) {
+    let msg = "Kunne ikke logge inn. Prøv igjen.";
+    if (e.code === "auth/invalid-email") msg = "Ugyldig e-post.";
+    if (e.code === "auth/user-not-found" || e.code === "auth/wrong-password")
+      msg = "Feil e-post eller passord.";
+    if (e.code === "auth/too-many-requests")
+      msg = "For mange forsøk. Vent litt og prøv igjen.";
+    Alert.alert("Innlogging feilet", msg);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+// ny handler
+const handleBiometricLogin = async () => {
+  if (!existingUser) return;
+
+  const enabled = await SecureStore.getItemAsync("biometricEnabled");
+  if (enabled !== "true") {
+    Alert.alert("Biometrisk innlogging er ikke aktivert på denne enheten.");
+    return;
+  }
+
+  const compatible = await LocalAuthentication.hasHardwareAsync();
+  const enrolled = await LocalAuthentication.isEnrolledAsync();
+  if (!compatible || !enrolled) {
+    Alert.alert("Biometrisk innlogging er ikke tilgjengelig på denne enheten.");
+    return;
+  }
+
+  const result = await LocalAuthentication.authenticateAsync({
+    promptMessage: "Logg inn med biometrikk",
+    cancelLabel: "Bruk passord",
+  });
+
+  if (result.success) {
+    router.replace("/(tabs)"); 
+  }
+  // hvis avbrutt/feilet gjør ingenting lar bruker skrive inn annen bruker
+};
+
+
+const handleForgotNav = () => {
+    console.log("FORGOT PRESSED");
+  alert("Pressed");
+  router.push("/velkommen/glemtpassord/GlemtPassord");
+};
+
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -65,7 +155,7 @@ export default function Login() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+          contentContainerStyle={{flexGrow: 1, paddingBottom: 40}}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -73,14 +163,39 @@ export default function Login() {
             <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
               <AntDesign name="left" size={22} />
             </TouchableOpacity>
-            <Text style={styles.title}>
-              <Text style={{ fontWeight: "700" }}>Logg inn </Text>
-              til brukeren din
-            </Text>
-            <View style={{ width: 22 }} />
+           <Text style={styles.title}>
+  <Text style={{ fontWeight: '700' }}>Logg inn </Text>
+  <Text>til brukeren din</Text>
+</Text>
+            <View style={{width: 22}} />
           </View>
+          
 
-          <View style={styles.content}>
+  {/* Funksjonalitet for knapper til google, github og twitter som vi prøvde på med sptofiy og api devbuild loginn
+<View style={styles.container}>
+       <TouchableOpacity
+  style={styles.iconButton}
+    disabled={!request}
+  // @ts-ignore: useProxy is supported at runtime
+  onPress={() => promptAsync({ useProxy: true })}   
+>
+  <AntDesign name="google" size={24} color="#000" />
+</TouchableOpacity>
+
+      {/* Twitter 
+      <TouchableOpacity style={[styles.iconButton, styles.twitter]}>
+        <AntDesign name="twitter" size={24} color="#fff" />
+      </TouchableOpacity>
+
+      {/* GitHub 
+      <TouchableOpacity style={styles.iconButton}>
+        <AntDesign name="github" size={24} color="#000" />
+      </TouchableOpacity>
+    </View>
+    */}
+
+
+        <View style={styles.content}>
             <View style={styles.form}>
               <LabeledInput
                 icon="mail"
@@ -104,17 +219,17 @@ export default function Login() {
                   style={styles.eyeToggle}
                   hitSlop={8}
                 >
-                  <AntDesign name={showPass ? "eye" : "eyeo"} size={18} color="#111" />
+                  <AntDesign name={showPass ? "eye" : "eye-invisible"} size={18} color="#111"/>
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity onPress={handleForgot} style={styles.forgotWrap}>
+              <TouchableOpacity onPress={handleForgotNav} style={styles.forgotWrap}>
                 <Text style={styles.forgotText}>Glemt passordet ditt?</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity
-              style={[styles.primaryBtn, loading && { opacity: 0.7 }]}
+              style={[styles.primaryBtn, loading && {opacity: 0.7}]}
               onPress={handleLogin}
               activeOpacity={0.85}
               disabled={loading}
@@ -126,9 +241,24 @@ export default function Login() {
               )}
             </TouchableOpacity>
 
+            
+{existingUser && (
+  <TouchableOpacity
+    onPress={handleBiometricLogin}
+    activeOpacity={0.8}
+    style={styles.biometricBtn}
+  >
+    <Image
+      source={biometricsIcon}
+      style={styles.biometricImg}
+      resizeMode="cover"
+    />
+  </TouchableOpacity>
+)}
+
             <View style={styles.bottomSection}>
               <Text style={styles.bottomTitle}>Ny til klubben?</Text>
-              <TouchableOpacity onPress={() => router.push("../auth/register")}>
+              <TouchableOpacity onPress={() => router.push("/velkommen/Register")}>
                 <Text style={styles.bottomLink}>Registrer deg nå!</Text>
               </TouchableOpacity>
             </View>
@@ -159,7 +289,7 @@ function LabeledInput(props: {
   } = props;
   return (
     <View style={styles.inputRow}>
-      <AntDesign name={icon} size={18} style={styles.inputIcon} />
+      <AntDesign name={icon} size={18} style={styles.inputIcon}/>
       <TextInput
         style={styles.input}
         placeholder={placeholder}
@@ -175,7 +305,32 @@ function LabeledInput(props: {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
+  safe: {flex: 1, backgroundColor: "#fff"},
+
+  //Biometric
+biometricBtn: {
+  width: 80,          
+  height: 80,        
+  padding: 8,         
+  borderRadius: 100,
+  borderColor: "#000",
+  borderStyle: "solid",
+  borderWidth: 2,
+
+  overflow: "hidden",
+  alignSelf: "center",
+  marginTop: 15,
+  marginBottom: 16,
+  justifyContent: "center",
+  alignItems: "center",
+},
+
+biometricImg: {
+  width: "100%",
+  height: "100%",
+  borderRadius: 128,
+},
+//biometric slutt
 
   headerRow: {
     flexDirection: "row",
@@ -185,7 +340,7 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     marginBottom: 8,
   },
-  title: { fontSize: 22, flex: 1, textAlign: "left", marginLeft: 6 },
+  title: {fontSize: 22, flex: 1, textAlign: "left", marginLeft: 6},
 
   content: {
     flexGrow: 1,
@@ -196,7 +351,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  form: { marginTop: 28, gap: 18 },
+  form: {marginTop: 28, gap: 18},
 
   inputRow: {
     width: "100%",
@@ -207,13 +362,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     minHeight: 54,
   },
-  inputIcon: { marginRight: 10, color: "#111" },
-  input: { flex: 1, fontSize: 16, color: "#111" },
+  inputIcon: {marginRight: 10, color: "#111"},
+  input: {flex: 1, fontSize: 16, color: "#111"},
 
-  eyeToggle: { position: "absolute", right: 14, top: 16 },
+  eyeToggle: {position: "absolute", right: 14, top: 16},
 
-  forgotWrap: { paddingVertical: 6, alignSelf: "flex-end" },
-  forgotText: { color: "#111" },
+  forgotWrap: {paddingVertical: 6, alignSelf: "flex-end"},
+  forgotText: {color: "#111"},
 
   primaryBtn: {
     backgroundColor: "#111",
@@ -225,13 +380,34 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 22,
   },
-  primaryText: { color: "#fff", fontWeight: "600", fontSize: 18 },
+  primaryText: {color: "#fff", fontWeight: "600", fontSize: 18},
 
   bottomSection: {
     alignItems: "center",
     justifyContent: "center",
     marginTop: 40,
   },
-  bottomTitle: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
-  bottomLink: { fontSize: 14, color: "#111" },
+  bottomTitle: {fontSize: 16, fontWeight: "700", marginBottom: 4},
+  bottomLink: {fontSize: 14, color: "#111"},
+
+    container: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 16,
+    marginTop: 16,
+  },
+  iconButton: {
+    width: 60,
+    height: 40,
+    borderWidth: 1,
+    borderColor: "#000",
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  twitter: {
+    backgroundColor: "#000",
+  },
+
 });
