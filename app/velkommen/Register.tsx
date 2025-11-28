@@ -86,7 +86,7 @@ await setDoc(doc(FIRESTORE_DB, "users", cred.user.uid), {
             <AntDesign name="left" size={22} />
           </TouchableOpacity>
           <Text style={styles.title}>
-            <Text style={{fontWeight: "700"}}>Opprett</Text>din nye bruker
+            <Text style={{fontWeight: "700"}}>Opprett </Text>din nye bruker
           </Text>
           <View style={{width: 22}} />
         </View>

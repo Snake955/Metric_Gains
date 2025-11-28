@@ -74,7 +74,7 @@ export default function Login() {
               <AntDesign name="left" size={22} />
             </TouchableOpacity>
             <Text style={styles.title}>
-              <Text style={{ fontWeight: "700" }}>Logg inn</Text>
+              <Text style={{ fontWeight: "700" }}>Logg inn </Text>
               til brukeren din
             </Text>
             <View style={{ width: 22 }} />
